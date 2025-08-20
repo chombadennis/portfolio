@@ -1,26 +1,177 @@
 @import "tailwindcss";
 
+/* === Theme Variables === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light Theme */
+  --background: 45 20% 96%; /* soft cream */
+  --foreground: 0 0% 10%; /* near black */
+  --primary: 220 60% 25%; /* navy */
+  --primary-foreground: 0 0% 100%; /* white */
+  --secondary: 45 20% 90%; /* pale cream */
+  --secondary-foreground: 0 0% 15%;
+  --muted: 45 20% 92%;
+  --muted-foreground: 0 0% 35%;
+  --accent: 220 60% 25%; /* navy for accents */
+  --accent-foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --border: 45 15% 80%; /* soft beige border */
+  --input: 45 15% 80%;
+  --ring: 220 60% 25%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 137 72% 44%;
+  --success-foreground: 0 0% 100%;
+  --warning: 35 92% 55%;
+  --warning-foreground: 0 0% 0%;
+
+  --radius: 0.5rem;
 }
 
+/* Dark Theme */
+.dark {
+  --background: 220 40% 6%; /* deep navy black */
+  --foreground: 0 0% 95%; /* off-white */
+  --primary: 220 60% 40%; /* bright navy */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 25% 12%; /* darker navy */
+  --secondary-foreground: 0 0% 95%;
+  --muted: 220 20% 10%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 220 75% 60%;
+  --accent-foreground: 0 0% 100%;
+  --card: 220 35% 10%; /* slightly lighter navy for contrast */
+  --card-foreground: 0 0% 95%;
+  --popover: 220 35% 10%;
+  --popover-foreground: 0 0% 95%;
+  --border: 220 20% 25%; /* subtle navy borders */
+  --input: 220 20% 25%;
+  --ring: 220 75% 60%;
+}
+
+/* Tailwind v4 Theme Inline (replaces tailwind.config.js) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* === Colors === */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  /* === Fonts === */
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Inconsolata", monospace;
+
+  /* === Radius === */
+  --radius: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* === Base Styles === */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+
+    /* Subtle dot pattern */
+    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-attachment: fixed;
+
+    /* Background wave animation */
+    animation: bgShift 30s linear infinite;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @keyframes bgShift {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 100px 100px;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* === Components === */
+@layer components {
+  .card-hover {
+    transition: all 0.2s ease;
+    background: hsl(var(--card));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .gradient-text {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--primary))
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .code-block {
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+/* === Utilities === */
+@layer utilities {
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  .container-narrow {
+    max-width: 768px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .container-wide {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }

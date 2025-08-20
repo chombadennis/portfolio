@@ -1,0 +1,41 @@
+[
+  {
+    "id": "1",
+    "title": "Getting Started with React",
+    "slug": "getting-started-with-react",
+    "content": "React is a popular JavaScript library for building user interfaces. In this post, we will explore how to set up a simple React project and understand its core concepts.",
+    "excerpt": "A beginner-friendly guide to getting started with React.",
+    "featured_image_url": "https://placehold.co/600x400?text=React",
+    "author_name": "Dennis Munene",
+    "published": true,
+    "created_at": "2025-01-10T09:00:00.000Z",
+    "updated_at": "2025-01-10T09:00:00.000Z",
+    "category": "Web Development"
+  },
+  {
+    "id": "2",
+    "title": "Introduction to Machine Learning",
+    "slug": "introduction-to-machine-learning",
+    "content": "Machine Learning is transforming industries by enabling systems to learn and improve automatically from experience. In this post, we break down the basics of ML.",
+    "excerpt": "An overview of machine learning concepts and applications.",
+    "featured_image_url": "https://placehold.co/600x400?text=ML",
+    "author_name": "Dennis Munene",
+    "published": true,
+    "created_at": "2025-01-15T14:30:00.000Z",
+    "updated_at": "2025-01-15T14:30:00.000Z",
+    "category": "Machine Learning"
+  },
+  {
+    "id": "3",
+    "title": "DevOps for Beginners",
+    "slug": "devops-for-beginners",
+    "content": "DevOps is a set of practices that combines software development and IT operations. It aims to shorten the development lifecycle and deliver high-quality software continuously.",
+    "excerpt": "Learn the fundamentals of DevOps and why it matters.",
+    "featured_image_url": "https://placehold.co/600x400?text=DevOps",
+    "author_name": "Dennis Munene",
+    "published": true,
+    "created_at": "2025-01-20T11:45:00.000Z",
+    "updated_at": "2025-01-20T11:45:00.000Z",
+    "category": "DevOps"
+  }
+]
