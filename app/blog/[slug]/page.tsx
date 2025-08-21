@@ -8,6 +8,9 @@ import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";
 import { cookies } from "next/headers";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 interface BlogPost {
   id: string;
   title: string;
@@ -130,12 +133,10 @@ async function getPostBySlug(
 ): Promise<{ post: BlogPost | null; error: string | null; notFound: boolean }> {
   try {
     const headers = await getAuthHeader();
-    const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_BASE_URL ?? ""
-      }/api/posts/slug/${encodeURIComponent(slug)}`,
-      { next: { tags: ["posts"] }, headers }
-    );
+    const res = await fetch(`/api/posts/slug/${encodeURIComponent(slug)}`, {
+      next: { tags: ["posts"] },
+      headers,
+    });
 
     if (res.status === 404) return { post: null, error: null, notFound: true };
     if (!res.ok)

@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User } from "lucide-react";
 import { cookies } from "next/headers";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 interface BlogPost {
   id?: string;
   title: string;
@@ -117,10 +120,10 @@ async function getPosts(): Promise<{
 }> {
   try {
     const headers = await getAuthHeader();
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/posts`,
-      { next: { tags: ["posts"] }, headers }
-    );
+    const res = await fetch(`/api/posts`, {
+      next: { tags: ["posts"] },
+      headers,
+    });
     if (!res.ok) return { posts: [], error: "Failed to load posts" };
     const posts = (await res.json()) as BlogPost[];
 
