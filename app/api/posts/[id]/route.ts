@@ -4,8 +4,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { PostModel } from "@/lib/models/Post";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 
-type Params = { params: { id: string } };
-
 const ALLOWED_EMAIL = (
   process.env.NEXT_PUBLIC_ALLOWED_EMAIL || ""
 ).toLowerCase();
@@ -13,8 +11,11 @@ const ALLOWED_EMAIL = (
 /**
  * GET by id (public fetch by id).
  */
-export async function GET(_req: Request, ctx: Params) {
-  const { id } = await ctx.params; // ✅ await params
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
   const Post = await PostModel();
   const doc = await Post.findById(id).lean({ virtuals: true });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -24,8 +25,11 @@ export async function GET(_req: Request, ctx: Params) {
 /**
  * PUT - update post (admin only).
  */
-export async function PUT(req: Request, ctx: Params) {
-  const { id } = await ctx.params; // ✅ await params
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
 
   const supabase = await createServerSupabaseClient();
   const {
@@ -69,8 +73,11 @@ export async function PUT(req: Request, ctx: Params) {
 /**
  * DELETE - admin only.
  */
-export async function DELETE(_req: Request, ctx: Params) {
-  const { id } = await ctx.params; // ✅ await params
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
 
   const supabase = await createServerSupabaseClient();
   const {
