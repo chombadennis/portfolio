@@ -135,7 +135,7 @@ export default function BlogAdmin() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await authFetch(`${getBaseUrl()}/api/posts`, {
+        const res = await authFetch("/api/posts", {
           cache: "no-store",
         });
         if (!res.ok) {
@@ -186,7 +186,7 @@ export default function BlogAdmin() {
   };
 
   async function createPost(): Promise<void> {
-    const res = await authFetch(`${getBaseUrl()}/api/posts`, {
+    const res = await authFetch("/api/posts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -204,7 +204,7 @@ export default function BlogAdmin() {
   }
 
   async function updatePost(id: string): Promise<void> {
-    const res = await authFetch(`${getBaseUrl()}/api/posts/${id}`, {
+    const res = await authFetch("/api/posts/${id}", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -221,7 +221,7 @@ export default function BlogAdmin() {
   }
 
   async function removePost(id: string): Promise<void> {
-    const res = await authFetch(`${getBaseUrl()}/api/posts/${id}`, {
+    const res = await authFetch("/api/posts/${id}", {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete post.");

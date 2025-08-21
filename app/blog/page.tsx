@@ -127,7 +127,7 @@ async function getPosts(): Promise<{
 }> {
   try {
     const headers = await getAuthHeader();
-    const res = await fetch(`${getBaseUrl()}/api/posts`, {
+    const res = await fetch("/api/posts", {
       next: { tags: ["posts"] },
       headers,
     });
