@@ -139,10 +139,8 @@ async function getPostBySlug(
   slug: string
 ): Promise<{ post: BlogPost | null; error: string | null; notFound: boolean }> {
   try {
-    const headers = await getAuthHeader();
     const res = await fetch(`/api/posts/slug/${encodeURIComponent(slug)}`, {
-      next: { tags: ["posts"] },
-      headers,
+      cache: "no-store", // force fresh data
     });
 
     if (res.status === 404) return { post: null, error: null, notFound: true };

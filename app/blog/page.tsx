@@ -126,10 +126,8 @@ async function getPosts(): Promise<{
   error: string | null;
 }> {
   try {
-    const headers = await getAuthHeader();
     const res = await fetch("/api/posts", {
-      next: { tags: ["posts"] },
-      headers,
+      cache: "no-store", // force fresh data
     });
     if (!res.ok) return { posts: [], error: "Failed to load posts" };
     const posts = (await res.json()) as BlogPost[];
