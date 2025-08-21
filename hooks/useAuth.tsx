@@ -23,6 +23,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // ✅ Add authFetch to satisfy AuthContextType
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = session?.access_token;
+    const headers = {
+      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    return fetch(url, { ...options, headers });
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -49,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [session]);
 
   // Admin check based on allowed email
   const ALLOWED_EMAIL = process.env.NEXT_PUBLIC_ALLOWED_EMAIL as string;
@@ -63,6 +74,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isLoading,
         isAdmin,
         signOut,
+        authFetch, // ✅ Added here
       }}
     >
       {children}

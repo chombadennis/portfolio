@@ -22,7 +22,9 @@ export interface AuthContextType {
 }
 
 // ✅ Provide undefined as default so we can enforce usage via hook
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
