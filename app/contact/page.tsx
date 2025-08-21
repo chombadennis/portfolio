@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { emailRateLimiter } from "@/lib/rateLimiter";
 import { sanitizeInput, isValidEmail, validateFormData } from "@/lib/security";
 import { logger } from "@/lib/logger";
-import emailjs from "@emailjs/browser";
 import {
   Mail,
   Phone,
@@ -121,10 +120,12 @@ export default function Contact() {
         return;
       }
 
+      // Keep `title` for your existing validation (EmailJS-era), but also include `subject`
       const sanitizedData = {
         name: sanitizeInput(formData.name),
         email: sanitizeInput(formData.email),
-        title: sanitizeInput(formData.subject), // EmailJS uses 'title' not 'subject'
+        title: sanitizeInput(formData.subject), // preserves compatibility with your validateFormData
+        subject: sanitizeInput(formData.subject), // the field your Nodemailer route expects
         message: sanitizeInput(formData.message),
         time: new Date().toLocaleString(),
       };
@@ -178,12 +179,23 @@ export default function Contact() {
 
       logger.userAction("contact_form_submit", { email: sanitizedData.email });
 
-      await emailjs.sendForm(
-        "service_m6kgo99",
-        "template_r4w4o2k",
-        formRef.current!,
-        "nkVjs07O32Fnv1IPM"
-      );
+      // Send to your Nodemailer API route
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sanitizedData.name,
+          email: sanitizedData.email,
+          subject: sanitizedData.subject || sanitizedData.title,
+          message: sanitizedData.message,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Unknown error");
+      }
 
       setIsSubmitted(true);
       setFormData({ name: "", email: "", subject: "", message: "" });
@@ -341,6 +353,7 @@ export default function Contact() {
                     />
                   </div>
 
+                  {/* These hidden fields can remain; they're no-ops now */}
                   <input type="hidden" name="from_name" value={formData.name} />
                   <input
                     type="hidden"
@@ -348,38 +361,45 @@ export default function Contact() {
                     value={formData.email}
                   />
                   <input type="hidden" name="title" value={formData.subject} />
-
                   <input
                     type="hidden"
                     name="time"
                     value={new Date().toLocaleString()}
                   />
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full bg-gradient-primary hover:shadow-glow"
-                    disabled={!isFormValid || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Message
-                      </>
+                  <div className="w-full">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-glow"
+                      disabled={!isFormValid || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Helper message when button is disabled */}
+                    {!isFormValid && !isSubmitting && (
+                      <p className="mt-2 text-sm text-red-500 text-center">
+                        Please fill in all required fields before sending.
+                      </p>
                     )}
-                  </Button>
+                  </div>
                 </form>
               </CardContent>
             </Card>
           </motion.div>
 
           {/* Contact Info / Social Links / Availability - UNCHANGED */}
-          {/* ... (same as original) */}
 
           {/* Contact Information */}
           <motion.div

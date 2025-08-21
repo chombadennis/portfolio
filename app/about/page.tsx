@@ -123,14 +123,13 @@ const skillIcons: Record<string, ReactElement> = {
 };
 
 const skillsProgress = [
-  { skill: "JavaScript/ TypeScript", note: "Used in 12+ projects" },
-  { skill: "React / Next.js", note: "Built 8+ full-stack apps" },
+  { skill: "JavaScript/ TypeScript", note: "Used in my projects" },
+  { skill: "React / Next.js", note: "Built full-stack apps" },
   { skill: "Node.js / Express", note: "Created scalable APIs" },
   { skill: "Python", note: "Data science & automation" },
-  { skill: "Machine Learning", note: "Models with 90%+ accuracy" },
+  { skill: "Machine Learning", note: "Models created" },
   { skill: "MongoDB / PsgSQL", note: "Efficient DB design" },
   { skill: "Civil Engineering", note: "Structural & infrastructure projects" },
-  { skill: "Project Management", note: "Agile & waterfall expertise" },
 ];
 
 export default function About() {
