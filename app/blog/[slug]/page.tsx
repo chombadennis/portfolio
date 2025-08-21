@@ -125,15 +125,23 @@ function formatDate(iso?: string | null): string {
   });
 }
 
+function getBaseUrl() {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 async function getPostBySlug(
   slug: string
 ): Promise<{ post: BlogPost | null; error: string | null; notFound: boolean }> {
   try {
     const headers = await getAuthHeader();
     const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_BASE_URL ?? ""
-      }/api/posts/slug/${encodeURIComponent(slug)}`,
+      `${getBaseUrl()}/api/posts/slug/${encodeURIComponent(slug)}`,
       { next: { tags: ["posts"] }, headers }
     );
 
