@@ -125,23 +125,17 @@ function formatDate(iso?: string | null): string {
   });
 }
 
-function getBaseUrl() {
-  if (typeof window !== "undefined") {
-    return "";
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
-
 async function getPostBySlug(
   slug: string
 ): Promise<{ post: BlogPost | null; error: string | null; notFound: boolean }> {
   try {
-    const res = await fetch(`/api/posts/slug/${encodeURIComponent(slug)}`, {
-      cache: "no-store", // force fresh data
-    });
+    const headers = await getAuthHeader();
+    const res = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_BASE_URL ?? ""
+      }/api/posts/slug/${encodeURIComponent(slug)}`,
+      { next: { tags: ["posts"] }, headers }
+    );
 
     if (res.status === 404) return { post: null, error: null, notFound: true };
     if (!res.ok)

@@ -110,25 +110,17 @@ function formatDate(iso?: string | null): string {
   });
 }
 
-function getBaseUrl() {
-  if (typeof window !== "undefined") {
-    return "";
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
-
 // Fetch posts with full metadata
 async function getPosts(): Promise<{
   posts: BlogPost[];
   error: string | null;
 }> {
   try {
-    const res = await fetch("/api/posts", {
-      cache: "no-store", // force fresh data
-    });
+    const headers = await getAuthHeader();
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/posts`,
+      { next: { tags: ["posts"] }, headers }
+    );
     if (!res.ok) return { posts: [], error: "Failed to load posts" };
     const posts = (await res.json()) as BlogPost[];
 
@@ -157,18 +149,16 @@ export default async function BlogPage() {
   const { posts, error: loadError } = await getPosts();
 
   return (
-    <div className="pt-24 pb-16 bg-[#fdfaf3]">
+    <div className="pt-24 pb-16 bg-background">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Hero Header */}
         <header className="mb-12 text-center">
-          <header className="mb-12 text-center">
-            <h1 className="text-3xl md:text-4xl font-medium tracking-tight leading-snug mb-4 text-foreground">
-              My _ <span className="text-primary italic">Nuggets</span>...
-            </h1>
-          </header>
-
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            Career Insights & Guidance
+          </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto italic">
-            Just a few notes, here and there:
+            Explore strategies, professional development tips, and industry
+            knowledge to elevate your career and skills.
           </p>
         </header>
 

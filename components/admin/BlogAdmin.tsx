@@ -54,16 +54,6 @@ const FONT_OPTIONS = [
   "Ubuntu, sans-serif",
 ];
 
-function getBaseUrl() {
-  if (typeof window !== "undefined") {
-    return "";
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://localhost:3000";
-}
-
 /** Helpers to safely normalize API responses into BlogPost */
 function getIdFromRecord(p: Record<string, unknown>): string {
   if (typeof p.id === "string" && p.id.length > 0) return p.id;
@@ -204,7 +194,7 @@ export default function BlogAdmin() {
   }
 
   async function updatePost(id: string): Promise<void> {
-    const res = await authFetch("/api/posts/${id}", {
+    const res = await authFetch(`/api/posts/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -221,7 +211,7 @@ export default function BlogAdmin() {
   }
 
   async function removePost(id: string): Promise<void> {
-    const res = await authFetch("/api/posts/${id}", {
+    const res = await authFetch(`/api/posts/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete post.");
