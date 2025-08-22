@@ -18,7 +18,43 @@ interface PostCreateBody {
 }
 
 function serializePosts(docs: unknown[]): unknown[] {
-  return docs;
+  return docs.map((doc) => {
+    const d = doc as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...d };
+
+    // Normalize timestamps
+    const createdAtVal = d.createdAt;
+    if (createdAtVal instanceof Date) {
+      out.created_at = (createdAtVal as Date).toISOString();
+      delete out.createdAt;
+    } else if (typeof createdAtVal === "string") {
+      out.created_at = createdAtVal;
+      delete out.createdAt;
+    }
+
+    const updatedAtVal = d.updatedAt;
+    if (updatedAtVal instanceof Date) {
+      out.updated_at = (updatedAtVal as Date).toISOString();
+      delete out.updatedAt;
+    } else if (typeof updatedAtVal === "string") {
+      out.updated_at = updatedAtVal;
+      delete out.updatedAt;
+    }
+
+    // Normalize id
+    if (d._id) {
+      try {
+        out.id = String(d._id);
+      } catch {
+        /* ignore */
+      }
+      delete out._id;
+    } else if (d.id) {
+      out.id = d.id;
+    }
+
+    return out;
+  });
 }
 
 const ALLOWED_EMAIL = (

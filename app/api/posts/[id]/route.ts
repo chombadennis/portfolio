@@ -4,13 +4,22 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { PostModel } from "@/lib/models/Post";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 
-export const runtime = "nodejs"; // ✅ Force Node.js runtime
+export const runtime = "nodejs";
 
 const ALLOWED_EMAIL = (
   process.env.NEXT_PUBLIC_ALLOWED_EMAIL || ""
 ).toLowerCase();
 
-// ✅ Correct type for route params (no custom interface, avoids build error)
+// ✅ Define expected post fields for TypeScript
+export interface PostDoc {
+  _id: string | number;
+  slug?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  [key: string]: unknown;
+}
+
+// ✅ Correct type for route params
 type ParamsContext = { params: { id: string } };
 
 /**
@@ -19,13 +28,40 @@ type ParamsContext = { params: { id: string } };
 export async function GET(_req: Request, context: ParamsContext) {
   const { id } = context.params;
   const Post = await PostModel();
-  const doc = await Post.findById(id).lean({ virtuals: true });
+  const doc = (await Post.findById(id).lean({
+    virtuals: true,
+  })) as PostDoc | null;
 
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(doc);
+  const out: Record<string, unknown> = { ...doc };
+
+  // Normalize timestamps
+  if (doc.createdAt instanceof Date) {
+    out.created_at = doc.createdAt.toISOString();
+    delete out.createdAt;
+  } else if (typeof doc.createdAt === "string") {
+    out.created_at = doc.createdAt;
+    delete out.createdAt;
+  }
+
+  if (doc.updatedAt instanceof Date) {
+    out.updated_at = doc.updatedAt.toISOString();
+    delete out.updatedAt;
+  } else if (typeof doc.updatedAt === "string") {
+    out.updated_at = doc.updatedAt;
+    delete out.updatedAt;
+  }
+
+  // Normalize id
+  if (doc._id) {
+    out.id = String(doc._id);
+    delete out._id;
+  }
+
+  return NextResponse.json(out);
 }
 
 /**
@@ -44,10 +80,12 @@ export async function PUT(req: Request, context: ParamsContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const updates: Record<string, unknown> = await req.json();
+  const updates: Partial<PostDoc> = await req.json();
   const Post = await PostModel();
 
-  const existing = await Post.findById(id);
+  const existing = (await Post.findById(id)) as
+    | (PostDoc & { save: () => Promise<PostDoc> })
+    | null;
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -72,7 +110,7 @@ export async function PUT(req: Request, context: ParamsContext) {
   if (oldSlug) revalidatePath(`/blog/${oldSlug}`);
   revalidatePath(`/blog/${saved.slug}`);
 
-  return NextResponse.json(saved.toJSON());
+  return NextResponse.json(saved);
 }
 
 /**
@@ -92,7 +130,7 @@ export async function DELETE(_req: Request, context: ParamsContext) {
   }
 
   const Post = await PostModel();
-  const doc = await Post.findByIdAndDelete(id);
+  const doc = (await Post.findByIdAndDelete(id)) as PostDoc | null;
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

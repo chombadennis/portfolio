@@ -11,61 +11,61 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt: string;
-  featured_image_url?: string;
-  author_name: string;
-  published: boolean;
-  created_at: string;
-  updated_at: string;
-  category?: string;
-  content_background?: string;
-  content_font?: string;
+id: string;
+title: string;
+slug: string;
+content: string;
+excerpt: string;
+featured_image_url?: string;
+author_name: string;
+published: boolean;
+created_at: string;
+updated_at: string;
+category?: string;
+content_background?: string;
+content_font?: string;
 }
 
 const DEFAULT_BG = "#ffffff";
 const DEFAULT_FONT =
-  "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, sans-serif";
+"system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, sans-serif";
 
-/** tolerate null/undefined HTML */
+/\*_ tolerate null/undefined HTML _/
 function stripHtmlToText(html?: string | null): string {
-  const input = typeof html === "string" ? html : "";
-  return input
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+const input = typeof html === "string" ? html : "";
+return input
+.replace(/<[^>]+>/g, " ")
+.replace(/\s+/g, " ")
+.trim();
 }
 
-/** tolerate null/undefined HTML */
+/\*_ tolerate null/undefined HTML _/
 function getReadTime(html?: string | null): string {
-  const wordsPerMinute = 200;
-  const text = stripHtmlToText(html);
-  if (text.length === 0) return "1 min read";
-  const words = text.split(/\s+/).filter(Boolean).length;
-  const minutes = Math.max(1, Math.ceil(words / wordsPerMinute));
-  return `${minutes} min read`;
+const wordsPerMinute = 200;
+const text = stripHtmlToText(html);
+if (text.length === 0) return "1 min read";
+const words = text.split(/\s+/).filter(Boolean).length;
+const minutes = Math.max(1, Math.ceil(words / wordsPerMinute));
+return `${minutes} min read`;
 }
 
-/** Robust date formatter: returns formatted string or "Unknown" if invalid */
+/\*_ Robust date formatter: returns formatted string or "Unknown" if invalid _/
 function formatDate(iso?: string | null): string {
-  if (!iso) return "Unknown";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "Unknown";
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+if (!iso) return "Unknown";
+const d = new Date(iso);
+if (isNaN(d.getTime())) return "Unknown";
+return d.toLocaleDateString("en-US", {
+year: "numeric",
+month: "long",
+day: "numeric",
+});
 }
 
 async function getPostBySlug(
-  slug: string
+slug: string
 ): Promise<{ post: BlogPost | null; error: string | null; notFound: boolean }> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+try {
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     const res = await fetch(
       `${baseUrl}/api/posts/slug/${encodeURIComponent(slug)}`,
@@ -81,42 +81,44 @@ async function getPostBySlug(
 
     const post = (await res.json()) as BlogPost;
     return { post, error: null, notFound: false };
-  } catch {
-    return { post: null, error: "Failed to load post", notFound: false };
-  }
+
+} catch {
+return { post: null, error: "Failed to load post", notFound: false };
+}
 }
 
-/**
- * Blog Post Page
- */
-export default async function BlogPostPage({
+/\*\*
+
+- Blog Post Page
+  \*/
+  export default async function BlogPostPage({
   params,
-}: {
+  }: {
   params: Promise<{ slug: string }>;
-}) {
+  }) {
   const { slug } = await params;
   const { post, error, notFound: is404 } = await getPostBySlug(slug);
 
-  if (is404) {
-    notFound();
-  }
+if (is404) {
+notFound();
+}
 
-  if (!post) {
-    return (
-      <div className="pt-24 pb-16 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="mb-8">
-            <Button
+if (!post) {
+return (
+<div className="pt-24 pb-16 bg-background">
+<div className="container mx-auto px-4 max-w-4xl">
+<div className="mb-8">
+<Button
               variant="ghost"
               asChild
               className="hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg"
             >
-              <Link href="/blog">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Blog
-              </Link>
-            </Button>
-          </div>
+<Link href="/blog">
+<ArrowLeft className="h-4 w-4 mr-2" />
+Back to Blog
+</Link>
+</Button>
+</div>
 
           <div className="text-center py-24">
             <h1 className="text-2xl font-semibold mb-4">
@@ -129,28 +131,29 @@ export default async function BlogPostPage({
         </div>
       </div>
     );
-  }
 
-  const safeHtml = DOMPurify.sanitize(post.content);
-  const created = post.created_at;
-  const updated = post.updated_at;
+}
 
-  return (
-    <div className="pt-24 pb-16 bg-background">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Back Button */}
-        <div className="mb-8">
-          <Button
+const safeHtml = DOMPurify.sanitize(post.content);
+const created = post.created_at;
+const updated = post.updated_at;
+
+return (
+<div className="pt-24 pb-16 bg-background">
+<div className="container mx-auto px-4 max-w-4xl">
+{/_ Back Button _/}
+<div className="mb-8">
+<Button
             variant="ghost"
             asChild
             className="hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg"
           >
-            <Link href="/blog">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Blog
-            </Link>
-          </Button>
-        </div>
+<Link href="/blog">
+<ArrowLeft className="h-4 w-4 mr-2" />
+Back to Blog
+</Link>
+</Button>
+</div>
 
         {/* Featured Image */}
         {post.featured_image_url ? (
@@ -236,5 +239,6 @@ export default async function BlogPostPage({
         </footer>
       </div>
     </div>
-  );
+
+);
 }

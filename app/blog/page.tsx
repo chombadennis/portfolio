@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User } from "lucide-react";
-import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,69 +19,6 @@ interface BlogPost {
   updated_at: string;
   category?: string;
   content: string;
-}
-
-type ReqCookie = { name: string; value: string };
-type ReadonlyCookies = {
-  get(name: string): ReqCookie | undefined;
-  getAll(): ReqCookie[];
-};
-
-function extractTokenFromCookieValue(value: string): string | null {
-  const decoded = decodeURIComponent(value);
-  let parsed: unknown = null;
-  try {
-    parsed = JSON.parse(decoded);
-  } catch {
-    parsed = null;
-  }
-  if (Array.isArray(parsed)) {
-    const first = parsed[0];
-    if (typeof first === "string" && first.length > 0) return first;
-  }
-  if (typeof parsed === "object" && parsed !== null) {
-    const obj = parsed as {
-      access_token?: unknown;
-      currentSession?: { access_token?: unknown };
-    };
-    if (typeof obj.access_token === "string") return obj.access_token;
-    if (
-      obj.currentSession &&
-      typeof obj.currentSession.access_token === "string"
-    )
-      return obj.currentSession.access_token;
-  }
-  return null;
-}
-
-async function getBearerFromCookies(): Promise<string | null> {
-  const store = (await cookies()) as ReadonlyCookies;
-
-  const direct = store.get("sb-access-token")?.value;
-  if (direct) return direct;
-
-  const supa = store.get("supabase-auth-token")?.value;
-  if (supa) {
-    const t = extractTokenFromCookieValue(supa);
-    if (t) return t;
-  }
-
-  const all = store.getAll();
-  const proj = all.find(
-    (ck: ReqCookie) =>
-      ck.name.startsWith("sb-") && ck.name.endsWith("-auth-token")
-  );
-  if (proj) {
-    const t = extractTokenFromCookieValue(proj.value);
-    if (t) return t;
-  }
-
-  return null;
-}
-
-async function getAuthHeader(): Promise<Record<string, string>> {
-  const token = await getBearerFromCookies();
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function stripHtmlToText(html?: string | null): string {
@@ -119,15 +55,22 @@ async function getPosts(): Promise<{
   error: string | null;
 }> {
   try {
-    const headers = await getAuthHeader();
-    const res = await fetch(`/api/posts`, {
+    // Resolve base URL depending on environment
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
+    const res = await fetch(`${baseUrl}/api/posts`, {
+      // force dynamic fetch so it’s not cached at build time
+      cache: "no-store",
       next: { tags: ["posts"] },
-      headers,
     });
+
     if (!res.ok) return { posts: [], error: "Failed to load posts" };
     const posts = (await res.json()) as BlogPost[];
 
-    // Normalize metadata to ensure author, category, and content exist
     const normalizedPosts: BlogPost[] = posts.map((p) => ({
       id: p.id,
       slug: p.slug,
@@ -143,7 +86,8 @@ async function getPosts(): Promise<{
     }));
 
     return { posts: normalizedPosts, error: null };
-  } catch {
+  } catch (err) {
+    console.error("Error fetching posts:", err);
     return { posts: [], error: "Failed to load posts" };
   }
 }
