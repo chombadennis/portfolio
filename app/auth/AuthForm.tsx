@@ -282,6 +282,12 @@ const Auth = ({ onLogin }: AuthProps) => {
       onLogin?.(data.session ?? tempSession);
       clearFailures();
       setSuccessMessage("Successfully authenticated!");
+      // Explicitly wait for callback to finish before redirecting
+      await fetch("/api/auth/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
+      });
       router.push("/admin/blog");
     } catch {
       const failuresNow = recordFailure();
