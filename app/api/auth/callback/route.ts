@@ -1,44 +1,44 @@
 // app/api/auth/callback/route.ts
-import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-type SupabaseAuthEvent =
-  | "SIGNED_IN"
-  | "TOKEN_REFRESHED"
-  | "SIGNED_OUT"
-  | "USER_UPDATED"
-  | "PASSWORD_RECOVERY";
-
-type CallbackBody = {
-  event: SupabaseAuthEvent;
-  session?: {
-    access_token?: string;
-    refresh_token?: string;
-  } | null;
-};
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const { event, session } = (await request.json()) as CallbackBody;
-
-  // Create a fresh response object we can mutate
-  const res = NextResponse.json({ ok: true });
-  const supabase = await createServerSupabaseClient();
-
-  if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-    if (session?.access_token && session?.refresh_token) {
-      const { error } = await supabase.auth.setSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-      });
-      if (error) {
-        console.error("Error setting Supabase session:", error.message);
-      }
+  const { event, session } = await request.json();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Ignore if called from a Server Component.
+          }
+        },
+      },
     }
+  );
+
+  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token && session?.refresh_token) {
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
   }
 
-  if (event === "SIGNED_OUT") {
+  if (event === 'SIGNED_OUT') {
     await supabase.auth.signOut();
   }
 
-  return res;
+  return NextResponse.json({ ok: true });
 }

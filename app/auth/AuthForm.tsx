@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@/integrations/supabase/client";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
 
@@ -57,6 +57,9 @@ const Auth = ({ onLogin }: AuthProps) => {
   const ALLOWED_EMAIL = process.env.NEXT_PUBLIC_ALLOWED_EMAIL as string;
   const router = useRouter();
 
+  // Create a new supabase client per render (per @supabase/ssr docs)
+  const supabase = createClient();
+
   const normalizedAllowed = useMemo(
     () => normalizeEmail(ALLOWED_EMAIL),
     [ALLOWED_EMAIL]
@@ -67,7 +70,7 @@ const Auth = ({ onLogin }: AuthProps) => {
     // Bridge client auth state to server cookies for middleware
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
       await fetch("/api/auth/callback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +80,7 @@ const Auth = ({ onLogin }: AuthProps) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   const resetState = () => {
     setErrorMessage(null);

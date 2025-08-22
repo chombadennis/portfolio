@@ -9,7 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@/integrations/supabase/client";
 
 // Explicit type for everything the context should expose
 export interface AuthContextType {
@@ -35,6 +35,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     process.env.NEXT_PUBLIC_ALLOWED_EMAIL || ""
   ).toLowerCase();
 
+  // Create a new supabase client per render (per @supabase/ssr docs)
+  const supabase = createClient();
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data }) => {
@@ -54,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   // Compute admin flag
   const isAdmin = !!user?.email && user.email.toLowerCase() === ALLOWED_EMAIL;
@@ -80,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
     },
-    []
+    [supabase]
   );
 
   return (
