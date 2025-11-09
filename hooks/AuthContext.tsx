@@ -8,13 +8,12 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { createClient } from "@/integrations/supabase/client";
+import { User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 // Explicit type for everything the context should expose
 export interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: FirebaseUser | null;
   isLoading: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
@@ -27,53 +26,37 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const ALLOWED_EMAIL = (
     process.env.NEXT_PUBLIC_ALLOWED_EMAIL || ""
   ).toLowerCase();
 
-  // Create a new supabase client per render (per @supabase/ssr docs)
-  const supabase = createClient();
-
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setIsLoading(false);
     });
 
-    // Subscribe to auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-    });
-
     return () => {
-      subscription.unsubscribe();
+      unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   // Compute admin flag
   const isAdmin = !!user?.email && user.email.toLowerCase() === ALLOWED_EMAIL;
 
   // Sign out method
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await firebaseSignOut(auth);
     setUser(null);
-    setSession(null);
   };
 
   // Authenticated fetch with JWT
   const authFetch = useCallback(
     async (url: string, options?: RequestInit): Promise<Response> => {
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token;
+      const token = user ? await user.getIdToken() : null;
 
       return fetch(url, {
         ...options,
@@ -83,14 +66,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
     },
-    [supabase]
+    [user]
   );
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         isLoading,
         isAdmin,
         signOut,

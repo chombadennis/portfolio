@@ -1,0 +1,14 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 0
+
+# Environment variables and secrets.
+env:
+  # Grant access to secrets in Cloud Secret Manager.
+  # This makes the Gemini API Key available to the running application
+  # as a `GEMINI_API_KEY` environment variable.
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+  - variable: NEXT_PUBLIC_ASSET_PREFIX
+    value: https://dennis-portfolio.web.app

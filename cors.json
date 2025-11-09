@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://3000-firebase-dennis-portfolio-1762477350821.cluster-ikslh4rdsnbqsvu5nw3v4dqjj2.cloudworkstations.dev",
+      "https://dennis-portfolio.web.app"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // By default, deny all access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow public read access to published posts.
+    // Allow admin (authenticated user) full access to all posts.
+    match /posts/{postId} {
+      allow read: if true; // The UI and API already filter for published posts for the public. Admin UI needs to read all.
+      allow write: if request.auth != null; // Primary security is in the API, which checks for the specific admin email. 
+                                            // This rule ensures only a logged-in user can attempt to write.
+    }
+  }
+}

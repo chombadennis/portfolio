@@ -54,7 +54,7 @@ const timeline = [
   },
   {
     year: "2021",
-    title: "Assistant Engineer",
+    title: "Engineering",
     company: "Sobetra Limited",
     companyUrl: "https://sobetrainternational.com/",
     type: "work",
@@ -72,7 +72,7 @@ const timeline = [
   },
   {
     year: "2020",
-    title: "CAD Design Engineer",
+    title: "CAD Drafting & Civil Engineering",
     company: "China Wu Yi Ltd",
     companyUrl: "https://www.chinawuyi.com.cn/",
     type: "work",
@@ -91,7 +91,7 @@ const timeline = [
     companyUrl: "https://example.com",
     type: "Attachment",
     description:
-      "Assisted in design and drafting of structural engineering projects",
+      "Assisted in design, drafting and supervision of structural engineering projects",
     skills: ["Excel Spreadsheets", "AutoCAD", "BS Codes", "Site Supervision"],
   },
   {
@@ -101,8 +101,15 @@ const timeline = [
     companyUrl: "https://www.dkut.ac.ke/",
     type: "education",
     description:
-      "Bachelor of Engineering in Civil Engineering with focus on civil and structural design and project management.",
-    skills: ["AutoCAD", "Project Management", "Structural Analysis", "Revit"],
+      "Bachelor of Science in Civil Engineering with focus on civil and structural design and project management.",
+    skills: [
+      "AutoCAD",
+      "Project Management",
+      "Structural Analysis",
+      "Highway Engineering",
+      "Water & Waste Water Enigneering",
+      "Traffic Engineering",
+    ],
   },
 ];
 
@@ -127,7 +134,7 @@ const skillsProgress = [
   { skill: "React / Next.js", note: "Built full-stack apps" },
   { skill: "Node.js / Express", note: "Created scalable APIs" },
   { skill: "Python", note: "Data science & automation" },
-  { skill: "Machine Learning", note: "Models created" },
+  { skill: "Machine Learning", note: "Data Science & AI" },
   { skill: "MongoDB / PsgSQL", note: "Efficient DB design" },
   { skill: "Civil Engineering", note: "Structural & infrastructure projects" },
 ];
@@ -147,11 +154,10 @@ export default function About() {
             About Me
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            My <span className="gradient-text">Professional Journey</span>
+            My <span className="gradient-text">Evolving Career</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            A detailed look into my background, experience, and the path that
-            led me to become a versatile engineer across multiple disciplines.
+            An overview of my background, experience and path across disiplines.
           </p>
         </motion.div>
 
@@ -239,20 +245,20 @@ export default function About() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <h2 className="text-2xl font-semibold mb-6">My Philosophy</h2>
+              <h2 className="text-2xl font-semibold mb-6">My Perspective</h2>
               <Card className="border-border/50">
                 <CardContent className="p-8">
                   <blockquote className="text-lg italic text-muted-foreground leading-relaxed">
-                    &ldquo;Technology should serve humanity, not the other way
-                    around. My diverse background allows me to approach problems
-                    from multiple angles, creating solutions that are not only
-                    technically sound but also practically viable and
-                    user-friendly.&rdquo;
+                    &ldquo;Technology exists to empower people, not constrain
+                    them. With my background, I make my contribution from
+                    multiple perspectives, designing solutions that are both
+                    technically robust and practically effective.&rdquo;
                   </blockquote>
                   <p className="mt-6 text-foreground">
-                    This philosophy drives my commitment to continuous learning
-                    and my passion for bridging the gap between traditional
-                    engineering principles and modern software solutions.
+                    This mindset drives my continuous learning and inspires my
+                    approach at the intersection of traditional engineering and
+                    modern software,ensuring my contributions are innovative,
+                    effective and user-centered.
                   </p>
                 </CardContent>
               </Card>
@@ -269,7 +275,7 @@ export default function About() {
             >
               <Card className="border-border/50 h-full">
                 <CardContent className="p-6 sm:p-4 space-y-6">
-                  <h3 className="font-semibold text-orange-200 text-center">
+                  <h3 className="font-semibold text-orange-400 text-center">
                     Featured Skills & Expertise*
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 sm:gap-4">

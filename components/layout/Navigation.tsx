@@ -6,16 +6,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/AuthContext";
 
-import { Menu, Sun, Moon } from "lucide-react"; // ❌ removed X (unused import)
+import { Menu, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
   { name: "Projects", href: "/projects" },
-  { name: "Admin Blog", href: "/admin/blog" }, // 🔑 new link
-  { name: "🧽Nuggets", href: "/blog" },
+  { name: "Dashboard", href: "/admin/blog", admin: true },
+  { name: "Cover Letter", href: "/admin/cover-letter", admin: true },
+  { name: "Nuggets", href: "/blog" },
   { name: "Contact", href: "/contact" },
 ];
 
@@ -24,6 +26,7 @@ export function Navigation() {
   const [isDark, setIsDark] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth(); // Use auth hook to check for logged-in user
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,23 +37,24 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ❌ Removed theme initialization useEffect (handled by layout.tsx now)
-
+  // Theme handling is now in layout.tsx, this can be simplified.
   const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    localStorage.setItem("theme", newTheme ? "dark" : "light");
-    document.documentElement.classList.toggle("dark", newTheme);
-    document.body.classList.toggle("light", !newTheme);
+    document.documentElement.classList.toggle("dark");
+    setIsDark(!isDark);
   };
 
   const NavLink = ({
     item,
     mobile = false,
   }: {
-    item: (typeof navigationItems)[0];
+    item: { name: string; href: string; admin?: boolean };
     mobile?: boolean;
   }) => {
+    // Hide admin links if user is not logged in
+    if (item.admin && !user) {
+      return null;
+    }
+
     const isActive = pathname === item.href;
 
     return (
@@ -81,7 +85,6 @@ export function Navigation() {
     >
       <div className="container mx-auto px-6">
         <nav className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center text-primary-foreground font-bold text-sm transition-all duration-300 group-hover:scale-105 group-hover:rotate-3 shadow-lg">
               DC
@@ -91,14 +94,12 @@ export function Navigation() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {navigationItems.map((item) => (
               <NavLink key={item.name} item={item} />
             ))}
           </div>
 
-          {/* Theme Toggle & Mobile Menu */}
           <div className="flex items-center space-x-3">
             <Button
               variant="ghost"
@@ -106,15 +107,10 @@ export function Navigation() {
               onClick={toggleTheme}
               className="w-10 h-10 p-0 rounded-xl hover:bg-accent/50 transition-all duration-300"
             >
-              {isDark ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Mobile Menu Button */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button

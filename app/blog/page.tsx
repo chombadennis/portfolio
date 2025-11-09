@@ -1,14 +1,15 @@
-// app/blog/page.tsx
+"use client";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User } from "lucide-react";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { useAuth } from "@/hooks/AuthContext";
+import { collection, onSnapshot } from "firebase/firestore";
+import { firestore } from "@/lib/firebase";
+import { useEffect, useState } from "react";
 
 interface BlogPost {
-  id?: string;
+  id: string;
   title: string;
   slug: string;
   excerpt: string;
@@ -49,65 +50,42 @@ function formatDate(iso?: string | null): string {
   });
 }
 
-// Fetch posts with full metadata
-async function getPosts(): Promise<{
-  posts: BlogPost[];
-  error: string | null;
-}> {
-  try {
-    // Resolve base URL depending on environment
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-      ? process.env.NEXT_PUBLIC_SITE_URL
-      : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-    const res = await fetch(`${baseUrl}/api/posts`, {
-      // force dynamic fetch so it’s not cached at build time
-      cache: "no-store",
-      next: { tags: ["posts"] },
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(firestore, "posts"), (snapshot) => {
+      const postsData: BlogPost[] = [];
+      snapshot.forEach((doc) => {
+        postsData.push({ id: doc.id, ...doc.data() } as BlogPost);
+      });
+      setPosts(postsData);
+    }, (error) => {
+      console.error("Error fetching posts:", error);
+      setLoadError("Failed to load posts");
     });
 
-    if (!res.ok) return { posts: [], error: "Failed to load posts" };
-    const posts = (await res.json()) as BlogPost[];
-
-    const normalizedPosts: BlogPost[] = posts.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      title: p.title,
-      excerpt: p.excerpt || "",
-      featured_image_url: p.featured_image_url,
-      author_name: p.author_name || "Unknown Author",
-      created_at: p.created_at || new Date().toISOString(),
-      updated_at: p.updated_at || p.created_at || new Date().toISOString(),
-      category: p.category || "",
-      published: p.published,
-      content: p.content || p.excerpt || "",
-    }));
-
-    return { posts: normalizedPosts, error: null };
-  } catch (err) {
-    console.error("Error fetching posts:", err);
-    return { posts: [], error: "Failed to load posts" };
-  }
-}
-
-export default async function BlogPage() {
-  const { posts, error: loadError } = await getPosts();
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="pt-24 pb-16 bg-background">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Hero Header */}
         <header className="mb-12 text-center">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Career Insights & Guidance
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-4 text-foreground">
+            Career & Other Insights
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto italic">
-            Explore strategies, professional development tips, and industry
-            knowledge to elevate your career and skills.
-          </p>
         </header>
+
+        {user && user.email === 'dennis_mchomba@outlook.com' && (
+          <div className="text-center mb-8">
+            <Button asChild>
+              <Link href="/admin/blog">Admin Dashboard</Link>
+            </Button>
+          </div>
+        )}
 
         {loadError ? (
           <p className="text-center text-red-500">{loadError}</p>
@@ -162,13 +140,15 @@ export default async function BlogPage() {
                     </span>
                   </div>
 
-                  <Button
-                    asChild
-                    variant="default"
-                    className="w-full mt-auto rounded-xl"
-                  >
-                    <Link href={`/blog/${post.slug}`}>Read More</Link>
-                  </Button>
+                  <div className="flex justify-between items-center mt-auto">
+                    <Button
+                      asChild
+                      variant="default"
+                      className="rounded-xl"
+                    >
+                      <Link href={`/blog/${post.slug}`}>Read More</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

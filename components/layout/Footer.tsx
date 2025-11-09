@@ -30,13 +30,19 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-800 via-orange-700 to-yellow-600 shadow-lg">
+                  <span className="font-bold text-sm bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
+                    N
+                  </span>
+                </span>
               </div>
-              <span className="font-bold text-xl gradient-text">Portfolio</span>
+              <span className="font-bold text-l bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
+                Neneh
+              </span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              Versatile engineer specializing in full-stack development, data
-              science, and infrastructure design.
+              Versatile engineer crafting solutions across full-stack
+              development, data science and civil infrastructure design.
             </p>
             <div className="flex items-center space-x-2 text-muted-foreground text-sm">
               <MapPin className="h-4 w-4" />
@@ -95,17 +101,32 @@ export function Footer() {
               ))}
             </div>
             <p className="text-sm text-muted-foreground">
-              Available for freelance projects and collaboration opportunities.
+              Available for Technical projects and collaboration opportunities.
             </p>
           </div>
         </div>
 
         <Separator className="my-8" />
 
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Portfolio. All rights reserved.
+            © {new Date().getFullYear()} Dennis Chomba. All rights reserved.
           </p>
+
+          {/* Formula Presentation */}
+          <div className="text-center space-y-2">
+            <p className="text-xl md:text-2xl font-mono bg-gradient-to-r from-orange-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent">
+              V=γ(αP+βT+ϵ)
+            </p>
+            <div className="text-xs text-muted-foreground max-w-sm mx-auto space-y-1">
+              <p>
+                <strong>V</strong> = Value; proportional to the weighted sum of
+                projects, skills & tech, and hidden factors that build
+                experience.
+              </p>
+            </div>
+          </div>
+
           <div className="flex space-x-6 text-sm text-muted-foreground">
             <Link
               href="/privacy"

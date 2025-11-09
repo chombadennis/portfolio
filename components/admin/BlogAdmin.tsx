@@ -1,10 +1,11 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useAuth } from "@/hooks/AuthContext"; // your existing hook
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/AuthContext"; 
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,12 +13,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Save, X, LogOut, FileDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Plus, Trash2, Save, X, LogOut, Loader2, Upload, Image as ImageIcon, ExternalLink } from "lucide-react";
 import RichContentEditor from "@/components/admin/RichContentEditor";
-import { exportHtmlToPdf } from "@/utils/pdf";
 import * as mammoth from "mammoth";
-import { marked } from "marked";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
+// BlogPost Interface
 interface BlogPost {
   id: string;
   title: string;
@@ -34,70 +38,53 @@ interface BlogPost {
   content_font?: string;
 }
 
-const CATEGORIES: string[] = [
-  "All",
-  "Web Development",
-  "Data Engineering",
-  "Machine Learning",
-  "DevOps",
-  "Engineering",
-  "Full Stack",
-];
+// Constants
+const CATEGORIES: string[] = [ "Web Development", "Data Engineering", "Machine Learning", "DevOps", "Engineering", "Full Stack" ];
+const FONT_OPTIONS = [ "Arial, sans-serif", "Georgia, serif", "Times New Roman, Times, serif", "Courier New, monospace", "Verdana, sans-serif", "Roboto, sans-serif", "Ubuntu, sans-serif" ];
 
-const FONT_OPTIONS = [
-  "Arial, sans-serif",
-  "Georgia, serif",
-  "Times New Roman, Times, serif",
-  "Courier New, monospace",
-  "Verdana, sans-serif",
-  "Roboto, sans-serif",
-  "Ubuntu, sans-serif",
-];
-
-/** Helpers to safely normalize API responses into BlogPost */
+// Helper functions
 function getIdFromRecord(p: Record<string, unknown>): string {
   if (typeof p.id === "string" && p.id.length > 0) return p.id;
   if (typeof p._id === "string" && p._id.length > 0) return p._id;
-  // if _id is an object (ObjectId), stringify it
-  if (
-    p._id != null &&
-    typeof (p._id as { toString?: unknown }).toString === "function"
-  ) {
+  if (p._id && typeof (p._id as { toString?: unknown }).toString === "function") {
     return String((p._id as { toString: () => string }).toString());
   }
   return "";
 }
 
 function normalizePostData(raw: unknown): BlogPost {
-  const p = (raw as Record<string, unknown>) || {};
-  const id = getIdFromRecord(p) || String(p.id ?? p._id ?? "");
-  return {
-    id,
-    title: String(p.title ?? ""),
-    slug: String(p.slug ?? ""),
-    content: String(p.content ?? ""),
-    excerpt: String(p.excerpt ?? ""),
-    featured_image_url: String(p.featured_image_url ?? ""),
-    author_name: String(p.author_name ?? "Dennis Munene"),
-    published: Boolean(p.published ?? false),
-    created_at: String(p.created_at ?? p.createdAt ?? ""),
-    updated_at: String(p.updated_at ?? p.updatedAt ?? ""),
-    category: String(p.category ?? ""),
-    content_background: String(p.content_background ?? "#ffffff"),
-    content_font: String(p.content_font ?? "Arial, sans-serif"),
-  };
+    const p = (raw as Record<string, unknown>) || {};
+    const id = getIdFromRecord(p) || String(p.id ?? p._id ?? "");
+    return {
+      id,
+      title: String(p.title ?? ""),
+      slug: String(p.slug ?? ""),
+      content: String(p.content ?? ""),
+      excerpt: String(p.excerpt ?? ""),
+      featured_image_url: String(p.featured_image_url ?? ""),
+      author_name: String(p.author_name ?? "Dennis Munene"),
+      published: Boolean(p.published ?? false),
+      created_at: String(p.created_at ?? p.createdAt ?? ""),
+      updated_at: String(p.updated_at ?? p.updatedAt ?? ""),
+      category: String(p.category ?? ""),
+      content_background: String(p.content_background ?? "#ffffff"),
+      content_font: String(p.content_font ?? "Roboto, sans-serif"),
+    };
 }
+
 
 export default function BlogAdmin() {
   const { isAdmin, isLoading: authLoading, signOut, authFetch } = useAuth();
   const router = useRouter();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [postToDelete, setPostToDelete] = useState<BlogPost | null>(null);
+
+  const initialFormData = {
     title: "",
     slug: "",
     content: "",
@@ -107,563 +94,371 @@ export default function BlogAdmin() {
     published: false,
     category: "",
     content_background: "#ffffff",
-    content_font: "Arial, sans-serif",
-  });
+    content_font: "Roboto, sans-serif",
+  };
 
-  const formRef = useRef<HTMLDivElement | null>(null);
-  const postsListRef = useRef<HTMLDivElement | null>(null);
+  const [formData, setFormData] = useState<Omit<BlogPost, "id" | "created_at" | "updated_at">>(initialFormData);
+
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Track load errors for graceful UI
-  const [loadError, setLoadError] = useState<string | null>(null);
-
   useEffect(() => {
-    if (!authLoading && !isAdmin) router.push("/auth");
+    if (!authLoading && !isAdmin) {
+      router.push("/auth");
+    }
   }, [isAdmin, authLoading, router]);
 
-  // Load posts from DB (send Authorization so API treats us as admin)
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await authFetch("/api/posts", {
-          cache: "no-store",
-        });
-        if (!res.ok) {
-          const msg = `Failed to load posts (${res.status})`;
-          setLoadError(msg);
-          throw new Error(msg);
-        }
-
-        const rawData = await res.json();
-        const list = Array.isArray(rawData) ? rawData : [];
-        const normalized = list.map(normalizePostData);
-        setPosts(normalized);
-
-        if (normalized.length === 0) {
-          setLoadError(
-            "No posts found yet. You can create your first post using the form above."
-          );
-        } else {
-          setLoadError(null);
-        }
-      } catch {
-        setLoadError(
-          "Could not load posts from server. You can still use the editor and create posts."
-        );
-        toast({
-          title: "Error",
-          description: "Could not load posts from server.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchPosts = useCallback(async () => {
+    setIsLoadingPosts(true);
+    try {
+      const res = await authFetch("/api/posts", { cache: "no-store" });
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.details || `Failed to load posts (${res.status})`);
       }
-    })();
-  }, [toast, authFetch]);
+      const rawData = await res.json();
+      const normalized = Array.isArray(rawData) ? rawData.map(normalizePostData).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+      setPosts(normalized);
+    } catch (error) {
+      console.error("Failed to load posts:", error);
+      toast({ title: "Error Loading Posts", description: error instanceof Error ? error.message : "An unknown error occurred.", variant: "destructive" });
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, [authFetch, toast]);
 
-  const generateSlug = (title: string) =>
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPosts();
+    }
+  }, [isAdmin, fetchPosts]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const generateSlug = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => {
-      const updated = { ...prev, [field]: value } as typeof prev;
-      if (field === "title") updated.slug = generateSlug(value as string);
+      const updated = { ...prev, [field]: value };
+      if (field === "title" && !editingPost) {
+        updated.slug = generateSlug(value as string);
+      }
       return updated;
     });
   };
+  
+  const resetForm = () => {
+    setEditingPost(null);
+    setFormData(initialFormData);
+    titleInputRef.current?.focus();
+  };
 
-  async function createPost(): Promise<void> {
-    const res = await authFetch("/api/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+  const handleSelectPost = (post: BlogPost) => {
+    setEditingPost(post);
+    setFormData({
+      title: post.title,
+      slug: post.slug,
+      content: post.content ?? "",
+      excerpt: post.excerpt ?? "",
+      featured_image_url: post.featured_image_url || "",
+      author_name: post.author_name,
+      published: post.published,
+      category: post.category,
+      content_background: post.content_background ?? "#ffffff",
+      content_font: post.content_font ?? "Roboto, sans-serif",
     });
-    if (res.status === 409) {
-      throw new Error("Slug already exists.");
-    }
-    if (!res.ok) throw new Error("Failed to create post.");
-    const createdRaw = await res.json();
-    const created = normalizePostData(createdRaw);
-    setPosts((prev) => [created, ...prev]);
-    setLoadError(null);
-  }
-
-  async function updatePost(id: string): Promise<void> {
-    const res = await authFetch(`/api/posts/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    if (res.status === 409) {
-      throw new Error("Slug already exists.");
-    }
-    if (!res.ok) throw new Error("Failed to update post.");
-    const updatedRaw = await res.json();
-    const updated = normalizePostData(updatedRaw);
-    setPosts((prev) => prev.map((p) => (p.id === id ? updated : p)));
-  }
-
-  async function removePost(id: string): Promise<void> {
-    const res = await authFetch(`/api/posts/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete post.");
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-  }
+    titleInputRef.current?.focus();
+  };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.content) {
-      toast({
-        title: "Missing required fields",
-        description: "Title and content are required",
-        variant: "destructive",
-      });
+    if (!formData.title) {
+      toast({ title: "Title is required", variant: "destructive" });
       return;
     }
-
+    setIsSaving(true);
     try {
-      if (editingPost) {
-        // ensure we have an ID (normalized posts guarantee .id)
-        const id =
-          editingPost.id ||
-          getIdFromRecord(editingPost as unknown as Record<string, unknown>);
-        if (!id) throw new Error("Missing post id");
-        await updatePost(id);
-        toast({
-          title: "Post updated",
-          description: "Successfully updated post",
-        });
-      } else {
-        await createPost();
-        toast({ title: "Post created", description: "New blog post added" });
+      const res = await authFetch(editingPost ? `/api/posts/${editingPost.id}` : "/api/posts", {
+        method: editingPost ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.details || `Request failed with status ${res.status}`);
       }
-      resetForm();
-      postsListRef.current?.scrollIntoView({ behavior: "smooth" });
+      
+      const updatedPost = normalizePostData(await res.json());
+      
+      if (editingPost) {
+          setPosts(prev => prev.map(p => (p.id === editingPost.id ? updatedPost : p)));
+      } else {
+          setPosts(prev => [updatedPost, ...prev]);
+      }
+      handleSelectPost(updatedPost);
+      toast({ title: `Post ${editingPost ? 'Updated' : 'Created'}` });
     } catch (e) {
-      toast({
-        title: "Save failed",
-        description: e instanceof Error ? e.message : "Could not save post",
-        variant: "destructive",
-      });
+      console.error("Failed to save post:", e);
+      toast({ title: "Save Failed", description: e instanceof Error ? e.message : "Could not save the post.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleEdit = (post: BlogPost) => {
-    // post comes from normalized `posts` list, but be defensive anyway
-    const normalized = normalizePostData(post);
-    setEditingPost(normalized);
-    // Defensive fallbacks: ensure content/excerpt are never undefined.
-    setFormData({
-      title: normalized.title,
-      slug: normalized.slug,
-      content: normalized.content ?? "",
-      excerpt: normalized.excerpt ?? "",
-      featured_image_url: normalized.featured_image_url || "",
-      author_name: normalized.author_name,
-      published: normalized.published,
-      category: normalized.category,
-      content_background: normalized.content_background ?? "#ffffff",
-      content_font: normalized.content_font ?? "Arial, sans-serif",
-    });
-    setIsCreating(true);
+  const confirmDelete = async () => {
+    if (!postToDelete) return;
 
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-      titleInputRef.current?.focus();
-    }, 100);
-  };
+    const { id, featured_image_url } = postToDelete;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
     try {
-      await removePost(id);
-      toast({ title: "Post deleted", description: "Blog post removed" });
-    } catch {
-      toast({
-        title: "Delete failed",
-        description: "Could not delete post",
-        variant: "destructive",
-      });
-    }
-  };
+      const res = await authFetch(`/api/posts/${id}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 404) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody.details || 'Failed to delete post from database.');
+      }
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      slug: "",
-      content: "",
-      excerpt: "",
-      featured_image_url: "",
-      author_name: "Dennis Munene",
-      published: false,
-      category: "",
-      content_background: "#ffffff",
-      content_font: "Arial, sans-serif",
-    });
-    setEditingPost(null);
-    setIsCreating(false);
-    postsListRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+      if (featured_image_url) {
+        try {
+          const imageRef = ref(storage, featured_image_url);
+          await deleteObject(imageRef);
+        } catch (storageError: any) {
+            if (storageError.code !== 'storage/object-not-found') {
+                console.warn("Could not delete image from storage:", storageError);
+            }
+        }
+      }
 
-  const exportCurrentToPdf = () => {
-    if (!formData.title || !formData.content) {
-      toast({
-        title: "Nothing to export",
-        description: "Please add a title and content first.",
-        variant: "destructive",
-      });
-      return;
+      setPosts(prev => prev.filter(p => p.id !== id));
+      if (editingPost?.id === id) {
+        resetForm();
+      }
+      toast({ title: "Post Deleted", description: "The blog post and its assets have been removed." });
+    } catch (error) {
+      console.error("Delete operation failed:", error);
+      toast({ title: "Delete Failed", description: error instanceof Error ? error.message : "Could not delete the post.", variant: "destructive" });
+    } finally {
+        setPostToDelete(null); 
     }
-    exportHtmlToPdf({
-      title: formData.title,
-      author: formData.author_name,
-      contentHtml: formData.content,
-      createdAt: editingPost?.created_at,
-      updatedAt: editingPost?.updated_at,
-      fileName: formData.slug || undefined,
-    });
   };
 
   const handleImportFile = async (file: File) => {
-    try {
-      if (file.name.endsWith(".docx")) {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        handleInputChange("content", result.value);
-      } else if (file.name.endsWith(".md")) {
-        const text = await file.text();
-        const html = await marked(text);
-        handleInputChange("content", html as string);
-      } else if (file.name.endsWith(".txt")) {
-        const text = await file.text();
-        handleInputChange("content", `<p>${text.replace(/\n/g, "<br>")}</p>`);
-      } else if (file.name.endsWith(".html")) {
+    toast({ title: "Importing..."});
+    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            if (arrayBuffer) {
+                try {
+                    const result = await mammoth.convertToHtml({ arrayBuffer });
+                    handleInputChange("content", result.value);
+                    toast({ title: "Import Successful" });
+                } catch (mammothError) {
+                    toast({ title: "Import Failed", variant: "destructive" });
+                }
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    } else {
         const text = await file.text();
         handleInputChange("content", text);
-      } else {
-        toast({
-          title: "Unsupported file",
-          description: "Only .docx, .md, .txt, or .html are supported.",
-          variant: "destructive",
-        });
-      }
-      toast({ title: "Imported", description: "File imported successfully" });
-    } catch {
-      toast({
-        title: "Import failed",
-        description: "Could not import file",
-        variant: "destructive",
-      });
+        toast({ title: "Import Successful" });
+    }
+  };
+  
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    toast({ title: "Uploading Image..." });
+    try {
+      const storageRef = ref(storage, `images/${Date.now()}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      handleInputChange("featured_image_url", downloadURL);
+      toast({ title: "Image Uploaded" });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      toast({ title: "Image Upload Failed", variant: "destructive" });
     }
   };
 
-  const handleImageUpload = async (file: File) => {
-    // For now store small data URLs; for production use S3/Supabase Storage/Cloudinary.
-    const reader = new FileReader();
-    reader.onload = () => {
-      handleInputChange("featured_image_url", reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  if (authLoading || isLoading)
-    return <div className="container mx-auto p-6 text-center">Loading...</div>;
-
-  if (!isAdmin) return null;
+  if (authLoading || !isAdmin) {
+    return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl pt-20">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Blog Administration</h1>
-          <Button
-            onClick={() => setIsCreating(true)}
-            className="mt-4"
-            title="Create a new blog post"
-          >
-            <Plus className="h-4 w-4 mr-2" /> New Post
+    <>
+    <AlertDialog open={!!postToDelete} onOpenChange={(open) => !open && setPostToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the post titled "<span className='font-bold'>{postToDelete?.title}</span>" and its associated image from the servers.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
+    <div className="bg-muted/40 min-h-screen">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-8xl">
+        <header className="flex justify-between items-center pb-6 pt-16">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">Blog Dashboard</h1>
+          <Button variant="outline" onClick={async () => { await signOut(); router.push("/"); }}>
+            <LogOut className="h-4 w-4 mr-2" /> Sign Out
           </Button>
-        </div>
-        <Button
-          variant="outline"
-          onClick={async () => {
-            await signOut();
-            router.push("/");
-          }}
-          title="Sign out from admin"
-        >
-          <LogOut className="h-4 w-4 mr-2" /> Sign Out
-        </Button>
-      </div>
+        </header>
 
-      {isCreating && (
-        <Card className="mb-6" ref={formRef}>
-          <CardHeader>
-            <CardTitle>
-              {editingPost ? "Edit Post" : "Create New Post"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Title & Slug */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  ref={titleInputRef}
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="slug">Slug</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => handleInputChange("slug", e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Excerpt */}
-            <div>
-              <Label htmlFor="excerpt">Excerpt</Label>
-              <Textarea
-                id="excerpt"
-                value={formData.excerpt}
-                onChange={(e) => handleInputChange("excerpt", e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* Featured Image Upload */}
-            <div>
-              <Label>Featured Image</Label>
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleImageUpload(e.target.files[0]);
-                    }
-                  }}
-                />
-                {formData.featured_image_url && (
-                  <Image
-                    src={formData.featured_image_url}
-                    alt="Preview"
-                    width={96}
-                    height={64}
-                    className="w-24 h-16 object-cover rounded"
-                    unoptimized
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Category */}
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <select
-                id="category"
-                className="w-full border rounded-md p-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                value={formData.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-              >
-                <option value="">Select a category</option>
-                {CATEGORIES.filter((c) => c !== "All").map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Background + Font */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Background Color</Label>
-                <input
-                  type="color"
-                  value={formData.content_background}
-                  onChange={(e) =>
-                    handleInputChange("content_background", e.target.value)
-                  }
-                  className="w-16 h-10 p-0 border rounded mt-2 cursor-pointer"
-                  title="Pick background color"
-                />
-              </div>
-              <div>
-                <Label>Font Style</Label>
-                <select
-                  value={formData.content_font}
-                  onChange={(e) =>
-                    handleInputChange("content_font", e.target.value)
-                  }
-                  className="w-full border rounded-md p-2 mt-2"
-                >
-                  {FONT_OPTIONS.map((font) => (
-                    <option key={font} value={font}>
-                      {font}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Rich Editor */}
-            <RichContentEditor
-              content={formData.content}
-              onChange={(html) => handleInputChange("content", html)}
-            />
-
-            {/* Import Document */}
-            <div>
-              <Label>Import Document</Label>
-              <input
-                type="file"
-                accept=".docx,.md,.txt,.html"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleImportFile(e.target.files[0]);
-                  }
-                }}
-                className="block mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Supported: .docx, .md, .txt, .html
-              </p>
-            </div>
-
-            {/* Publish */}
-            <div className="flex items-center gap-2">
-              <Switch
-                id="published"
-                checked={formData.published}
-                onCheckedChange={(checked) =>
-                  handleInputChange("published", checked)
-                }
-              />
-              <Label htmlFor="published">Published</Label>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap">
-              <Button onClick={handleSubmit} title="Save or update blog post">
-                <Save className="h-4 w-4 mr-2" />
-                {editingPost ? "Update" : "Create"} Post
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={exportCurrentToPdf}
-                title="Export current post as PDF"
-              >
-                <FileDown className="h-4 w-4 mr-2" /> Export PDF
-              </Button>
-              <Button
-                variant="outline"
-                onClick={resetForm}
-                title="Cancel editing"
-              >
-                <X className="h-4 w-4 mr-2" /> Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      {/* All Posts */}
-      <h2 className="text-2xl font-semibold mb-4" ref={postsListRef}>
-        All Posts ({posts.length})
-      </h2>
-
-      {loadError && (
-        <Card className="mb-4">
-          <CardContent className="p-4 text-sm text-muted-foreground">
-            {loadError}
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {posts.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              No posts to display yet.
-              {isCreating
-                ? " Fill in the form above to create one."
-                : " Click “New Post” to create your first post."}
-            </CardContent>
-          </Card>
-        ) : (
-          posts.map((post) => (
-            <Card key={post.id || post.slug || Math.random()}>
-              <CardContent className="p-4 flex justify-between">
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold">{post.title}</h3>
-                    <Badge variant={post.published ? "default" : "secondary"}>
-                      {post.published ? "Published" : "Draft"}
-                    </Badge>
-                    {post.category && (
-                      <Badge variant="outline">{post.category}</Badge>
-                    )}
+                  <CardTitle>Your Posts</CardTitle>
+                  <CardDescription>{posts.length} posts</CardDescription>
+                </div>
+                <Button size="sm" onClick={resetForm}>
+                  <Plus className="h-4 w-4 mr-2" /> New
+                </Button>
+              </CardHeader>
+              <CardContent className="max-h-[65vh] overflow-y-auto pr-3">
+                {isLoadingPosts ? (
+                  <div className="text-center py-10"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-10">
+                    <h3 className="text-lg font-semibold">No posts yet</h3>
+                    <p className="text-sm text-muted-foreground">Click "New Post" to start.</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">/{post.slug}</p>
-                  {post.excerpt && (
-                    <p className="text-sm text-muted-foreground">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      exportHtmlToPdf({
-                        title: post.title,
-                        author: post.author_name,
-                        contentHtml: post.content,
-                        createdAt: post.created_at,
-                        updatedAt: post.updated_at,
-                        fileName: post.slug,
-                      })
-                    }
-                    title="Export this post to PDF"
-                  >
-                    <FileDown className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEdit(post)}
-                    title="Edit this post"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(post.id)}
-                    title="Delete this post"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    {posts.map((post) => (
+                      <div
+                        key={post.id}
+                        onClick={() => handleSelectPost(post)}
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${editingPost?.id === post.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
+                      >
+                        <h4 className="font-semibold truncate">{post.title}</h4>
+                        <p className="text-sm text-muted-foreground truncate">{post.excerpt || `/${post.slug}`}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant={post.published ? "default" : "secondary"}>{post.published ? "Published" : "Draft"}</Badge>
+                          {post.category && <Badge variant="outline">{post.category}</Badge>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ))
-        )}
+          </div>
+
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-2xl">{editingPost ? "Edit Post" : "Create New Post"}</CardTitle>
+                        <CardDescription>{editingPost ? `Editing "${editingPost.title}"` : "Fill out the details below."}</CardDescription>
+                    </div>
+                    {editingPost && (
+                        <Button variant="outline" size="sm" asChild>
+                            <a href={`/blog/${editingPost.slug}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 mr-2"/> View Live
+                            </a>
+                        </Button>
+                    )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input id="title" ref={titleInputRef} value={formData.title} onChange={(e) => handleInputChange("title", e.target.value)} placeholder="Enter a catchy title" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">URL Slug</Label>
+                    <Input id="slug" value={formData.slug} onChange={(e) => handleInputChange("slug", e.target.value)} placeholder="post-url-slug" />
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                    <Label htmlFor="excerpt">Excerpt</Label>
+                    <Textarea id="excerpt" value={formData.excerpt} onChange={(e) => handleInputChange("excerpt", e.target.value)} placeholder="A short summary of the post" rows={2}/>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                  <Label>Main Content</Label>
+                  <RichContentEditor content={formData.content} onChange={(html) => handleInputChange("content", html)} />
+                </div>
+                
+                <Card className="bg-muted/50">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Post Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                            <Label>Featured Image</Label>
+                            <div className="flex items-center gap-.tsx-4">
+                                <Input id="image-upload" type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])} className="hidden" />
+                                <Button variant="outline" asChild><Label htmlFor="image-upload" className="cursor-pointer w-full"><ImageIcon className="h-4 w-4 mr-2" /> Upload</Label></Button>
+                                {formData.featured_image_url && <Image src={formData.featured_image_url} alt="Preview" width={48} height={48} className="w-12 h-12 object-cover rounded-lg border" unoptimized/>}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Category</Label>
+                            <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CATEGORIES.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label>Content Font</Label>
+                            <Select value={formData.content_font} onValueChange={(value) => handleInputChange("content_font", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a font" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {FONT_OPTIONS.map((font) => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0]}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Import</Label>
+                            <Input id="file-import" type="file" accept=".docx,.md,.txt,.html" onChange={(e) => e.target.files?.[0] && handleImportFile(e.target.files[0])} className="hidden"/>
+                            <Button variant="outline" asChild><Label htmlFor="file-import" className="cursor-pointer w-full"><Upload className="h-4 w-4 mr-2" /> Import File</Label></Button>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 pt-6">
+                           <Switch id="published" checked={formData.published} onCheckedChange={(checked) => handleInputChange("published", checked)} />
+                           <Label htmlFor="published" className="cursor-pointer">Publish</Label>
+                        </div>
+                    </CardContent>
+                </Card>
+
+              </CardContent>
+              <CardFooter className="flex justify-end gap-3">
+                {editingPost && (
+                    <Button variant="destructive" onClick={() => setPostToDelete(editingPost)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                    </Button>
+                )}
+                <Button variant="outline" onClick={resetForm}>
+                  <X className="h-4 w-4 mr-2" /> Cancel
+                </Button>
+                <Button onClick={handleSubmit} disabled={isSaving}>
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  {editingPost ? "Save Changes" : "Create Post"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </main>
       </div>
     </div>
+    </>
   );
 }

@@ -1,0 +1,309 @@
+{
+  "development": [
+    {
+      "title": "Truck HOS Planner — ELD & Route Compliance",
+      "description": "A full-stack app that plans truck trips and enforces FMCSA hours-of-service rules while producing printable ELD (RODS) sheets.Backend: Django REST API with a rule-driven HOS engine implementing the 11-hour driving limit and 14-hour window, a required 30-minute break after 8 hours, rolling 70/8 and 60/7 weekly limits, a 34-hour restart and sleeper-berth split logic; routing uses OpenRouteService when configured with a haversine fallback, reverse geocoding uses Nominatim with caching.Frontend: React single-page app using Leaflet with OpenStreetMap tiles for mapping, auto-zoomed route fit, custom colored markers for Start Pickup and Dropoff, an interactive TripForm that accepts coordinates or lat/lng and an SVG ELD renderer that buckets events by day and shows remarks for each duty change.Exports: dom-to-image-more and jsPDF for PNG and multi-page PDF output.Includes admin models, environment-driven configuration, unit test skeletons and deployment notes for Render and Vercel.",
+      "image": "/images/projects/truck-hos-planner.png",
+      "technologies": [
+        "React",
+        "Leaflet",
+        "OpenStreetMap",
+        "Axios",
+        "dom-to-image-more",
+        "jsPDF",
+        "Django",
+        "Django REST framework",
+        "Python",
+        "PostgreSQL",
+        "SQLite (dev fallback)",
+        "Redis (optional cache)",
+        "OpenRouteService (optional routing)",
+        "Nominatim (reverse geocoding)",
+        "Docker",
+        "Vercel",
+        "Render",
+        "GitHub"
+      ],
+      "liveUrl": "https://truck-frontend-henna.vercel.app/",
+      "githubUrl": "https://github.com/chombadennis/truck-frontend.git",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "Portfolio Platform",
+      "description": "A full-stack portfolio showcase application. Built with React (Vite) for a fast, responsive frontend and Node.js/Express for the backend API. Supports secure authentication via Supabase, project creation, editing and dynamic image uploads in its Projects Management Dashboard, with real-time previews. Features a clean UI powered by shadcn/ui and TailwindCSS, with optimized workflows for adding, updating and showcasing projects. Deployed on Render with environment-specific configurations for seamless integration between frontend and backend services.",
+      "image": "/images/projects/portfolio.png",
+      "technologies": [
+        "React (Vite)",
+        "TypeScript",
+        "Node.js",
+        "Express",
+        "Supabase",
+        "PostgreSQL",
+        "TailwindCSS",
+        "ShadCN UI",
+        "Lucide Icons",
+        "Render"
+      ],
+      "liveUrl": "https://jseph.onrender.com/",
+      "githubUrl": "https://github.com/dennismuhnene/responsive-engineer-hub",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "Datum – Cloud File Storage & Management",
+      "description": "A modern cloud-based file storage and management platform built with Next.js and TypeScript. Supports folder navigation, file previews, and secure sharing, powered by Neon Postgres for persistent data storage, ImageKit for optimized image delivery, and Zod for strict input validation. Includes role-based access controls, a responsive UI built with shadcn/ui, and efficient file operations through an ORM for structured database access.",
+      "image": "/images/projects/datumImg.png",
+      "technologies": [
+        "Next.js",
+        "TypeScript",
+        "tsx",
+        "Neon Postgres",
+        "ImageKit",
+        "Clerk",
+        "Zod",
+        "Drizzle ORM",
+        "ShadCN UI",
+        "Lucide Icons"
+      ],
+      "liveUrl": "https://datum-cyan.vercel.app/",
+      "githubUrl": "https://github.com/chombadennis/datum.git",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "Teekit- Ticketing App",
+      "description": "A full-stack ticket management system built with Next.js 14, MongoDB, and Clerk for secure authentication. Features include creating, editing, viewing, and deleting tickets, dynamic dashboard filtering and a responsive UI.",
+      "image": "/images/projects/teekitImg.png",
+      "technologies": [
+        "Next.js 14",
+        "Tailwind CSS",
+        "JavaScript XML",
+        "JavaScript",
+        "MongoDB",
+        "Mongoose",
+        "ShadCN UI",
+        "Clerk Auth",
+        "FontAwesome"
+      ],
+      "liveUrl": "https://ticket-app-blond.vercel.app",
+      "githubUrl": "https://github.com/chombadennis/ticket-app.git",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "TravelBoom – Travel Recommendation Platform",
+      "description": "A functional travel recommendation website built with HTML, CSS and vanilla JavaScript. Fetches destination data from a JSON file using the Fetch API and provides interactive search for countries, beaches, temples, and African destinations.",
+      "image": "/images/projects/Tboom.png",
+      "technologies": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "JSON",
+        "Fetch API"
+      ],
+      "liveUrl": "https://dennismuhnene.github.io/travelRecommendation/",
+      "githubUrl": "https://github.com/dennismuhnene/travelRecommendation",
+      "date": "2025",
+      "featured": false
+    }
+  ],
+  "datascience": [
+    {
+      "title": "Clustering of the Daily Energy Consumption Load Profiles",
+      "description": "K-Means clustering on daily building energy usage (Building Genome Project) to identify consumption patterns, detect anomalies, and enhance demand forecasting. Presented through a Streamlit web app.",
+      "image": "/images/projects/cluster.png",
+      "technologies": [
+        "Python",
+        "Machine Learning",
+        "Version Control",
+        "K-Means Clustering",
+        "Building Energy Analysis",
+        "Streamlit",
+        "Exploratory Data Analysis",
+        "Data Visualization",
+        "Jupyter Notebook"
+      ],
+      "liveUrl": "https://buildinggenome-j8ambtrvuqu9rktsapvxek.streamlit.app/",
+      "githubUrl": "https://github.com/chombadennis/BuildingGenome_KNN/blob/main/Machine_Learning.ipynb",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "Electricity Prediction via K-Nearest Neighbor Regression",
+      "description": "Forecasted electricity consumption from enrgy load patterns using K-NN regression built from weather and historical energy data. Integrated into an interactive Streamlit interface for exploration.",
+      "image": "/images/projects/KNN.png",
+      "technologies": [
+        "Python",
+        "Machine Learning",
+        "K-Nearest Neighbor Regression",
+        "Building Energy Analysis",
+        "Version Control",
+        "Streamlit",
+        "EDA",
+        "Jupyter Notebook"
+      ],
+      "liveUrl": "https://builindgenomeknnpred0t9828fs9z4q.streamlit.app/",
+      "githubUrl": "https://github.com/chombadennis/BuildingGenome_KNN/blob/main/Machine_Learning.ipynb",
+      "date": "2025",
+      "featured": false
+    },
+    {
+      "title": "Thermal Comfort & Energy Forecasting with XGBoost",
+      "description": "Used XGBoost models to forecast building occupants’ thermal comfort and energy usage. Delivered results through a Streamlit app and detailed exploratory data analysis.",
+      "image": "/images/projects/xg.png",
+      "technologies": [
+        "Python",
+        "XGBoost",
+        "Streamlit",
+        "EDA",
+        "Forecasting",
+        "Building Energy Analysis",
+        "Jupyter Notebook"
+      ],
+      "liveUrl": "https://ashraebuildinggenome078980classification.streamlit.app/",
+      "githubUrl": "https://github.com/chombadennis/BuildingGenome_RFClustering/blob/main/Machine_Learning.ipynb",
+      "date": "2025",
+      "featured": false
+    },
+    {
+      "title": "Heavy Equipment Data Scraping, Cleaning & Consolidation",
+      "description": "Developed a suite of automated scrapers for  heavy equipment to extract specifications and features from websites, APIs and auction listings. Implemented dynamic schema creation for varying equipment categories, stored data in SQLite and built cleaning pipelines to normalize units (imperial to metric), handle missing values and export cleaned datasets for analysis. Consolidated all scripts into a main runner for streamlined execution. Currently creating a system that enables automated updates, error handling and database management functions. Use cases will include market analysis, inventory management and cost estimation, with future plans for machine learning integration, API development and dashboards.",
+      "image": "/images/projects/mach.png",
+      "technologies": [
+        "Python",
+        "BeautifulSoup",
+        "Requests",
+        "Selenium",
+        "SQLite",
+        "Pandas",
+        "NumPy"
+      ],
+      "liveUrl": "",
+      "githubUrl": "https://github.com/chombadennis/Heavy_Machines",
+      "date": "2025",
+      "featured": true
+    },
+    {
+      "title": "Job Posting Data Extraction, Exploratory Data Analysis and Visualization",
+      "description": "Automated extraction and analysis of job posting data using Beautiful Soup for ETL and visualization, uncovering hiring trends and requirements in the job market.",
+      "image": "/images/projects/webscraps.png",
+      "technologies": [
+        "Python",
+        "Web Scraping",
+        "Beautiful Soup",
+        "ETL",
+        "Data Visualization",
+        "Jupyter Notebook"
+      ],
+      "liveUrl": "",
+      "githubUrl": "https://github.com/chombadennis/Web-scrapping/blob/main/webscrabbber.ipynb",
+      "date": "2024",
+      "featured": false
+    },
+    {
+      "title": "Exploratory Data Analysis on Online Store Operations",
+      "description": "Performed EDA to uncover patterns, outliers, and correlations to optimize online store operations and drive data-informed recommendations for improving customer satisfaction.",
+      "image": "/images/projects/eda.png",
+      "technologies": [
+        "Python",
+        "EDA",
+        "Data Visualization",
+        "Jupyter Notebook"
+      ],
+      "liveUrl": "<your_project_live_url_here>",
+      "githubUrl": "https://github.com/chombadennis/EDA_Retail_Data/blob/main/Online_Retail_Data.ipynb",
+      "date": "2024",
+      "featured": false
+    }
+  ],
+  "civil": [
+    {
+      "title": "Hybrid 3-Bedroom Maisonette Design & Supervision",
+      "description": "Worked with Ujenzi Bora in leading the structural design of a hybrid 3-bedroom maisonette integrating modular steel shipping containers (one 40-ft and one 20-ft) with reinforced concrete structural framing for the foundation, slabs, and selected load-bearing walls.\n\nApplied structural steel framing in targeted areas to optimize load paths, accommodate architectural openings and improve construction efficiency.\n\nConducted structural analysis and design using Prota, Prokon, AutoCAD and Revit to validate performance under gravity and lateral loads in line with relevant standards.\n\nPrepared detailed construction drawings, reinforcement schedules, and supervised site execution to ensure quality control and compliance with design intent.\n\nEngaged in technical communication with the client, presenting design alternatives, clarifying sequencing of container integration and addressing modifications during execution.\n\nDelivered a cost-efficient and durable solution that harmonized conventional RC construction with modular containers and steel framing for sustainability and long-term performance.",
+      "image": "/images/projects/hybrid.png",
+      "technologies": [
+        "Prota",
+        "Prokon",
+        "AutoCAD",
+        "Revit",
+        "Structural Steel Design",
+        "RC Design",
+        "Modular Construction"
+      ],
+      "liveUrl": "https://drive.google.com/file/d/1Leoa8A1xtA-jjaX1WPSrZkCjB4Jy0_Qu/view?usp=sharing",
+      "githubUrl": "https://github.com/example",
+      "date": "2023",
+      "featured": false
+    },
+    {
+      "title": "Engineering and Construction Management",
+      "description": "Worked with Sobetra on major infrastructure projects including Nandi–Timboroa–Miteitei–Kopere road, water distribution networks in coastal Kenya, Konza Technopolis infrastructure Project and Upgrading of the Achwa Bridge Crossing in Uganda.\n\nResponsibilities included auditing Interim Payment Certificates to ensure accuracy, analyzing machine costs, and standardizing reporting templates for better data management.\n\nSupported project delivery through detailed analysis, design and cost evaluations. Negotiated with suppliers and subcontractors on service and products supplies to mainatain financial oversight.\n\nCoordinated between multiple sites and headquarters helping centralize project information and established structured governance for budgeting and performance reporting.\n\nAssisted the Project Management Office in developing policies, maintaining risk registers and capturing lessons learned to guide future projects.\n\nRegularly provided technical assistance, report writing and mentorship collaboration with senior management.",
+      "image": "/images/projects/konza.png",
+      "technologies": [
+        "AutoCAD",
+        "AutoCAD Civil-3D",
+        "Revit",
+        "ArchiCAD",
+        "MS Excel",
+        "Construction Project Management",
+        "Budget Estimation",
+        "Cost Analysis"
+      ],
+      "liveUrl": "https://example.com",
+      "githubUrl": "https://github.com/example",
+      "date": "2021",
+      "featured": false
+    },
+    {
+      "title": "Highway Infrastructure Development",
+      "description": "Worked with China Wu Yi where I contributed to the structural and civil works of the James Gichuru–Rironi Junction (A104) highway project, including supervision, structural detailing and review of the design analysis of drainage systems, retaining walls, and road infrastructure. Drafted shop drawings for four bridges covering superstructures, girders, and formwork along a 25 km stretch. Coordinated between contractors and consultants to ensure accurate interpretation of drawings on site. Prepared and reviewed technical clarifications with the chief engineer, while also guiding foreign contractors in fostering positive consultant–client relations for smooth project execution.",
+      "image": "/images/projects/road.png",
+      "technologies": [
+        "AutoCAD",
+        "AutoCAD-Civil 3D",
+        "Structural Design",
+        "Contruction Supervision",
+        "Quality Control"
+      ],
+      "liveUrl": "https://example.com",
+      "githubUrl": "https://github.com/example",
+      "date": "2020",
+      "featured": false
+    },
+    {
+      "title": "Residential Development",
+      "description": "Comprehensive structural analysis, design, detailing and construction supervision of 12 floor and a 5- floor residential Apartments in Kileleshwa and Umoja, Nairobi, Kenya;- Under Struhig Africa ltd.",
+      "image": "/images/projects/bldg.png",
+      "technologies": [
+        "Prokon",
+        "AutoCAD",
+        "Excel Spreadsheets",
+        "Structural Analysis",
+        "Structural Detailing",
+        "Constructio Supervision",
+        "Quality Control"
+      ],
+      "liveUrl": "https://example.com",
+      "githubUrl": "https://github.com/example",
+      "date": "2018",
+      "featured": false
+    },
+    {
+      "title": "Commercial Development",
+      "description": "Design review and structural detailing of the Kenya Women Microfinace Bank construction project in Nairobi, Kenya;- Under Struhig Africa ltd.",
+      "image": "/images/projects/kwft-centre.png",
+      "technologies": [
+        "AutoCAD",
+        "Excel Design Spreadsheets",
+        "Structural Design Review",
+        "Detailing",
+        "Construction Supervision"
+      ],
+      "liveUrl": "https://example.com",
+      "githubUrl": "https://github.com/example",
+      "date": "2018",
+      "featured": false
+    }
+  ]
+}
