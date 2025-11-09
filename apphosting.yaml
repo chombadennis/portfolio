@@ -10,8 +10,6 @@ env:
   # as a `GEMINI_API_KEY` environment variable.
   - variable: GEMINI_API_KEY
     secret: GEMINI_API_KEY
-  - variable: NEXT_PUBLIC_ASSET_PREFIX
-    value: https://dennis-portfolio.web.app
   - variable: APP_SERVICE_ACCOUNT_KEY
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
   - variable: NEXT_PUBLIC_ALLOWED_EMAIL
