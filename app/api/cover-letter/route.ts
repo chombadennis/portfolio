@@ -65,8 +65,8 @@ export async function POST(req: Request) {
     - Use standard paragraph spacing. Double line breaks between paragraphs.
     - Do not use the Oxford comma. For example, in a list of three items, write "item one, item two and item three" not "item one, item two, and item three".
 
-    **Title Guidance:**
-    - When referring to Dennis, use the title \'developer\' or \'engineer\', not \'full stack developer\'.
+    **Title Guidance (Absolute Mandate):**
+    - You are strictly forbidden from using the term \'full-stack developer\'. You MUST use \'developer\' or \'engineer\' instead. There are no exceptions.
 
     **Portfolio Context:**
     ${comprehensiveContext}
