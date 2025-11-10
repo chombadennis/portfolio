@@ -103,7 +103,7 @@ export default function BlogAdmin() {
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
-      router.push("/auth");
+      router.push("/nesh");
     }
   }, [isAdmin, authLoading, router]);
 
@@ -173,9 +173,10 @@ export default function BlogAdmin() {
       return;
     }
     setIsSaving(true);
+    const isUpdating = !!editingPost;
     try {
-      const res = await authFetch(editingPost ? `/api/posts/${editingPost.id}` : "/api/posts", {
-        method: editingPost ? "PUT" : "POST",
+      const res = await authFetch(isUpdating ? `/api/posts/${editingPost.id}` : "/api/posts", {
+        method: isUpdating ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
@@ -187,16 +188,22 @@ export default function BlogAdmin() {
       
       const updatedPost = normalizePostData(await res.json());
       
-      if (editingPost) {
+      if (isUpdating) {
           setPosts(prev => prev.map(p => (p.id === editingPost.id ? updatedPost : p)));
+          toast({ title: "Post Updated", description: `The post "${updatedPost.title}" has been successfully updated.` });
       } else {
           setPosts(prev => [updatedPost, ...prev]);
+          toast({ title: "Post Created", description: `The post "${updatedPost.title}" has been successfully created.` });
       }
       handleSelectPost(updatedPost);
-      toast({ title: `Post ${editingPost ? 'Updated' : 'Created'}` });
+
     } catch (e) {
       console.error("Failed to save post:", e);
-      toast({ title: "Save Failed", description: e instanceof Error ? e.message : "Could not save the post.", variant: "destructive" });
+      toast({ 
+        title: isUpdating ? "Update Failed" : "Creation Failed", 
+        description: e instanceof Error ? e.message : "Could not save the post.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsSaving(false);
     }
@@ -205,7 +212,7 @@ export default function BlogAdmin() {
   const confirmDelete = async () => {
     if (!postToDelete) return;
 
-    const { id, featured_image_url } = postToDelete;
+    const { id, featured_image_url, title } = postToDelete;
 
     try {
       const res = await authFetch(`/api/posts/${id}`, { method: "DELETE" });
@@ -229,7 +236,7 @@ export default function BlogAdmin() {
       if (editingPost?.id === id) {
         resetForm();
       }
-      toast({ title: "Post Deleted", description: "The blog post and its assets have been removed." });
+      toast({ title: "Post Deleted", description: `The post "${title}" and its assets have been removed.` });
     } catch (error) {
       console.error("Delete operation failed:", error);
       toast({ title: "Delete Failed", description: error instanceof Error ? error.message : "Could not delete the post.", variant: "destructive" });
@@ -395,7 +402,7 @@ export default function BlogAdmin() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <Label>Featured Image</Label>
-                            <div className="flex items-center gap-.tsx-4">
+                            <div className="flex items-center gap-2">
                                 <Input id="image-upload" type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])} className="hidden" />
                                 <Button variant="outline" asChild><Label htmlFor="image-upload" className="cursor-pointer w-full"><ImageIcon className="h-4 w-4 mr-2" /> Upload</Label></Button>
                                 {formData.featured_image_url && <Image src={formData.featured_image_url} alt="Preview" width={48} height={48} className="w-12 h-12 object-cover rounded-lg border" unoptimized/>}

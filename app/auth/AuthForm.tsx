@@ -13,7 +13,7 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Home } from "lucide-react";
+import { Home, Eye, EyeOff } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import type { AuthError } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -23,6 +23,8 @@ import { Loader2 } from "lucide-react";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showEmail, setShowEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loginAttempts, setLoginAttempts] = useState(0);
@@ -91,24 +93,45 @@ const Auth = () => {
       </h2>
 
       <form onSubmit={handleSignIn} className="space-y-5">
-        <input
-          type="email"
-          autoComplete="username"
-          placeholder="Email"
-          value={email}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-          required
-          className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-        />
-        <input
-          type="password"
-          autoComplete="current-password"
-          placeholder="Password"
-          value={password}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-          required
-          className="w-full px-4 py-3 rounded-md border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-        />
+        <div className="relative">
+          <input
+            type={showEmail ? 'text' : 'password'}
+            autoComplete="username"
+            placeholder="Email"
+            value={email}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            required
+            className="w-full pl-4 pr-12 py-3 rounded-md border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={() => setShowEmail(!showEmail)}
+            className="absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground hover:text-foreground"
+            aria-label={showEmail ? "Hide email" : "Show email"}
+          >
+            {showEmail ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            placeholder="Password"
+            value={password}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            required
+            className="w-full pl-4 pr-12 py-3 rounded-md border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 flex items-center px-4 text-muted-foreground hover:text-foreground"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
 
         <button
           type="submit"

@@ -77,6 +77,7 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
             
             <div
               className="prose prose-lg dark:prose-invert max-w-none space-y-6"
+              style={{ fontFamily: post.content_font || 'inherit' }}
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
         </div>
