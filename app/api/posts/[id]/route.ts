@@ -13,9 +13,9 @@ let postsCollection: CollectionReference<DocumentData>;
 let initError: Error | null = null;
 
 try {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.");
+    throw new Error("APP_SERVICE_ACCOUNT_KEY environment variable is not set.");
   }
 
   const serviceAccount = JSON.parse(serviceAccountKey);
@@ -116,7 +116,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const body = (await req.json()) as PostUpdateBody;
     const docRef = postsCollection.doc(params.id);
 
-    // Ensure slug is unique if it's being changed
+    // Ensure slug is unique if it'''s being changed
     if (body.slug) {
         const existing = await postsCollection.where("slug", "==", body.slug).get();
         if (!existing.empty && existing.docs.some(doc => doc.id !== params.id)) {
