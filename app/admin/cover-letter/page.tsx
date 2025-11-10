@@ -43,10 +43,10 @@ export default function CoverLetterGenerator() {
   };
 
   return (
-    <div className="container mx-auto pt-32 pb-10">
-      <Card>
+    <div className="container mx-auto pt-8 sm:pt-16 md:pt-32 pb-10 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle>AI Cover Letter Generator</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl">AI Cover Letter Generator</CardTitle>
           <CardDescription>
             Paste a job description below, and the AI will draft a tailored cover letter based on your portfolio.
           </CardDescription>
@@ -60,11 +60,11 @@ export default function CoverLetterGenerator() {
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the full job description here..."
               rows={10}
-              className="bg-muted/50"
+              className="bg-muted/50 w-full text-sm sm:text-base"
             />
           </div>
 
-          <Button onClick={handleGenerate} disabled={isLoading}>
+          <Button onClick={handleGenerate} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
             ) : (
@@ -74,9 +74,9 @@ export default function CoverLetterGenerator() {
 
           {coverLetter && (
             <div className="space-y-2 pt-4">
-              <h3 className="font-semibold text-lg">Generated Cover Letter:</h3>
-              <Card className="bg-muted/50 p-6">
-                <pre className="whitespace-pre-wrap font-sans text-sm">{coverLetter}</pre>
+              <h3 className="font-semibold text-lg sm:text-xl">Generated Cover Letter:</h3>
+              <Card className="bg-muted/50 p-4 sm:p-6">
+                <pre className="whitespace-pre-wrap font-sans text-sm sm:text-base">{coverLetter}</pre>
               </Card>
             </div>
           )}

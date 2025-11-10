@@ -1,3 +1,4 @@
+
 /* Retro Chatbot Styling - Inspired by Commodore/Apple II */
 
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -143,5 +144,35 @@
 @keyframes blink-animation {
   to {
     visibility: hidden;
+  }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .retro-chat-button {
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .retro-chatbot-window {
+    width: 90vw;
+    max-width: 400px;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 15px;
+  }
+
+  .retro-chatbot-screen {
+    height: 400px;
+  }
+
+  .retro-chatbot-body {
+    font-size: 1rem;
+  }
+
+  .retro-input {
+    font-size: 1rem;
   }
 }
