@@ -1,10 +1,10 @@
-"use client";
+'use client';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User } from "lucide-react";
 import { useAuth } from "@/hooks/AuthContext";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 
@@ -56,7 +56,9 @@ export default function BlogPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(firestore, "posts"), (snapshot) => {
+    const postsRef = collection(firestore, "posts");
+    const q = query(postsRef, where("published", "==", true));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const postsData: BlogPost[] = [];
       snapshot.forEach((doc) => {
         postsData.push({ id: doc.id, ...doc.data() } as BlogPost);

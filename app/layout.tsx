@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/hooks/AuthContext";
 import { ThemeProvider } from "next-themes";
 import RetroChatbot from "@/components/ai/RetroChatbot";
+import { Toaster } from "@/components/ui/toaster";
 import { logPageView } from '@/lib/firebase/analytics';
 
 const inter = Inter({
@@ -41,6 +42,7 @@ export default function RootLayout({
           <AuthProvider>
             <Navigation />
             <main>{children}</main>
+            <Toaster />
             <Footer />
             <RetroChatbot />
           </AuthProvider>

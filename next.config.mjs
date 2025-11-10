@@ -27,6 +27,16 @@ const nextConfig = {
       },
     ]
   },
+
+  async redirects() {
+    return [
+      {
+        source: '/auth',
+        destination: '/404',
+        permanent: false,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
