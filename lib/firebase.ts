@@ -1,7 +1,8 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,10 +13,39 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const firestore = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
+interface FirebaseServices {
+  app: FirebaseApp;
+  firestore: Firestore;
+  auth: Auth;
+  storage: FirebaseStorage;
+}
+
+// Helper function to initialize and cache Firebase services
+function getFirebaseServices(): FirebaseServices {
+  // In a serverless environment, we can cache the services in a global variable
+  // to ensure they are reused across function invocations.
+  if (global._firebaseServices) {
+    return global._firebaseServices;
+  }
+
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  const services = {
+    app,
+    firestore: getFirestore(app),
+    auth: getAuth(app),
+    storage: getStorage(app),
+  };
+
+  global._firebaseServices = services;
+
+  return services;
+}
+
+const { app, firestore, auth, storage } = getFirebaseServices();
 
 export { app, firestore, auth, storage };
+
+// Extend the NodeJS.Global interface to include our cached services for TypeScript
+declare global {
+  var _firebaseServices: FirebaseServices | undefined;
+}
