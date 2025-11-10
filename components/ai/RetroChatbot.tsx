@@ -76,7 +76,7 @@ const RetroChatbot = () => {
         <div ref={chatWindowRef} className="retro-chatbot-window">
           <div className="retro-chatbot-screen">
             <div className="retro-chatbot-title-bar">
-              <div className="title-text">AI ASSISTANT v2.1</div>
+              <div className="title-text">Neneh v2.1</div>
               <button onClick={() => setIsOpen(false)} className="close-button">
                 <X size={18} />
               </button>
