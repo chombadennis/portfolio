@@ -13,9 +13,9 @@ let postsCollection: CollectionReference<DocumentData>;
 let initError: Error | null = null;
 
 try {
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.");
+    throw new Error("APP_SERVICE_ACCOUNT_KEY environment variable is not set.");
   }
 
   const serviceAccount = JSON.parse(serviceAccountKey);
@@ -72,7 +72,7 @@ async function getIsAdmin(req: Request): Promise<[boolean, DecodedIdToken | null
 const handleInitError = () => {
     return NextResponse.json({
         error: "Server configuration error.",
-        details: "Firebase Admin SDK failed to initialize. Check server logs for details. This is likely due to a missing or malformed FIREBASE_SERVICE_ACCOUNT_KEY environment variable."
+        details: "Firebase Admin SDK failed to initialize. Check server logs for details. This is likely due to a missing or malformed APP_SERVICE_ACCOUNT_KEY environment variable."
     }, { status: 500 });
 }
 
