@@ -20,32 +20,34 @@ interface FirebaseServices {
   storage: FirebaseStorage;
 }
 
-// Helper function to initialize and cache Firebase services
-function getFirebaseServices(): FirebaseServices {
-  // In a serverless environment, we can cache the services in a global variable
-  // to ensure they are reused across function invocations.
-  if (global._firebaseServices) {
-    return global._firebaseServices;
+// A global variable to cache the Firebase services
+let firebaseServices: FirebaseServices | undefined;
+
+function initializeFirebaseServices(): FirebaseServices {
+  if (typeof window === "undefined") {
+    // Server-side initialization
+    if (!firebaseServices) {
+      const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+      firebaseServices = {
+        app,
+        firestore: getFirestore(app),
+        auth: getAuth(app),
+        storage: getStorage(app),
+      };
+    }
+    return firebaseServices;
+  } else {
+    // Client-side initialization
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    return {
+      app,
+      firestore: getFirestore(app),
+      auth: getAuth(app),
+      storage: getStorage(app),
+    };
   }
-
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  const services = {
-    app,
-    firestore: getFirestore(app),
-    auth: getAuth(app),
-    storage: getStorage(app),
-  };
-
-  global._firebaseServices = services;
-
-  return services;
 }
 
-const { app, firestore, auth, storage } = getFirebaseServices();
+const { app, firestore, auth, storage } = initializeFirebaseServices();
 
 export { app, firestore, auth, storage };
-
-// Extend the NodeJS.Global interface to include our cached services for TypeScript
-declare global {
-  var _firebaseServices: FirebaseServices | undefined;
-}

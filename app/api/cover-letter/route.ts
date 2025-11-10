@@ -1,13 +1,12 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { portfolioContext } from "@/lib/ai/context";
+import { 
+    heroContent,
+    aboutContent,
+    contactContent,
+} from "@/lib/ai/static-context";
 import projectsData from "@/data/projects.json";
-import { HeroSection } from "@/components/sections/HeroSection";
-import { AboutSection } from "@/components/sections/AboutSection";
-import Contact from "@/app/contact/page";
-import BlogPage from "@/app/blog/page";
-import BlogPostPage from "@/app/blog/[slug]/page";
-import BlogPostClient from "@/app/blog/[slug]/client";
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -19,27 +18,23 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 const projectsContext = JSON.stringify(projectsData, null, 2);
 
+// Assemble the new, stable context from static sources
 const comprehensiveContext = `
-${portfolioContext}
+  ${portfolioContext}
 
-## Projects
+  ## Website Content
 
-${projectsContext}
+  ### Home Page (Hero Section)
+  ${heroContent}
 
-## Home Page
+  ### About Page
+  ${aboutContent}
 
-${HeroSection.toString()}
-${AboutSection.toString()}
+  ### Contact Page
+  ${contactContent}
 
-## Contact Page
-
-${Contact.toString()}
-
-## Blog
-
-${BlogPage.toString()}
-${BlogPostPage.toString()}
-${BlogPostClient.toString()}
+  ## Projects
+  ${projectsContext}
 `;
 
 export async function POST(req: Request) {
@@ -61,8 +56,8 @@ export async function POST(req: Request) {
 
     **Formatting and Style Guidelines:**
     - The output must be a single, clean string of text.
-    - Do not include any markdown, special characters, symbols like asterisks or hyphens.
-    - Use standard paragraph spacing. Double line breaks between paragraphs.
+    - Do not include any markdown, special characters, or symbols like asterisks or hyphens.
+    - Use standard paragraph spacing with double line breaks between paragraphs.
     - Do not use the Oxford comma. For example, in a list of three items, write "item one, item two and item three" not "item one, item two, and item three".
 
     **Title Guidance (Absolute Mandate):**
@@ -87,7 +82,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.error("Error in cover letter API:", error);
+    console.error("Fatal Error in Cover Letter API:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }

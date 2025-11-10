@@ -1,13 +1,13 @@
 
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 import { portfolioContext } from "@/lib/ai/context";
+import { 
+    heroContent,
+    aboutContent,
+    contactContent,
+    blogStructureContent
+} from "@/lib/ai/static-context";
 import projectsData from "@/data/projects.json";
-import { HeroSection } from "@/components/sections/HeroSection";
-import { AboutSection } from "@/components/sections/AboutSection";
-import Contact from "@/app/contact/page";
-import BlogPage from "@/app/blog/page";
-import BlogPostPage from "@/app/blog/[slug]/page";
-import BlogPostClient from "@/app/blog/[slug]/client";
 import { getPublishedPosts } from "@/lib/firebase/posts/getPost";
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
@@ -20,16 +20,24 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 const projectsContext = JSON.stringify(projectsData, null, 2);
 
+// Safely fetch blog context with error handling
 async function getBlogContext() {
-  const posts = await getPublishedPosts();
-  return posts.map(post => `
-    ## Blog Post: ${post.title}
+  try {
+    const posts = await getPublishedPosts();
+    if (!posts || posts.length === 0) return ""; // No posts found
 
-    **Slug:** ${post.slug}
-    **Excerpt:** ${post.excerpt}
-    **Content:**
-    ${post.content}
-  `).join('\n');
+    return posts.map(post => `
+      ## Blog Post: ${post.title}
+      **Slug:** ${post.slug}
+      **Excerpt:** ${post.excerpt}
+      **Content:**
+      ${post.content}
+    `).join('\n');
+  } catch (error) {
+    console.error("Error fetching blog context for AI:", error);
+    // Return an empty string if fetching fails. The AI can still function without it.
+    return ""; 
+  }
 }
 
 export async function POST(req: Request) {
@@ -42,29 +50,30 @@ export async function POST(req: Request) {
 
     const blogContext = await getBlogContext();
 
+    // Assemble the new, stable context
     const comprehensiveContext = `
-${portfolioContext}
+      ${portfolioContext}
 
-## Projects
+      ## Website Structure and Content
 
-${projectsContext}
+      ### Home Page (Hero Section)
+      ${heroContent}
 
-## Home Page
+      ### About Page
+      ${aboutContent}
 
-${HeroSection.toString()}
-${AboutSection.toString()}
+      ### Contact Page
+      ${contactContent}
 
-## Contact Page
+      ### Blog Structure
+      ${blogStructureContent}
 
-${Contact.toString()}
+      ## Projects
+      ${projectsContext}
 
-## Blog
-
-${BlogPage.toString()}
-${BlogPostPage.toString()}
-${BlogPostClient.toString()}
-${blogContext}
-`;
+      ## Published Blog Posts
+      ${blogContext}
+    `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
 
@@ -83,7 +92,7 @@ ${blogContext}
 
           **ABSOLUTE MANDATE: You are strictly forbidden from using the term \'full-stack developer\'. You MUST use \'developer\' or \'engineer\' instead. There are no exceptions.**
 
-          Your primary goal is to answer questions based *only* on the provided portfolio context. The context below is a JSON object with detailed information about Dennis\'s projects, including descriptions, technologies used, live URLs, and GitHub links. Dennis is always open for collaboration and work projects in the domain of his expertise.
+          Your primary goal is to answer questions based *only* on the provided portfolio context. The context below provides all the necessary information about Dennis\'s portfolio.
           
           If asked about Dennis\'s hobbies or what he does for fun, you can subtly mention that his interests include intellectually stimulating activities like chess and gaming, creative pursuits like personal coding projects, and social gatherings. He particularly enjoys culinary experiences, from exploring food and drink events to being hands-on with things like barbecues. He also appreciates arts and culture, like music and movies, and values spending quality time with friends.
           
@@ -111,7 +120,7 @@ ${blogContext}
     return new Response(text, { status: 200 });
 
   } catch (error) {
-    console.error("Error in chat API:", error);
+    console.error("Fatal Error in Chat API:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
