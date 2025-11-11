@@ -12,8 +12,6 @@ import {
   CheckCircle,
   Clock,
   GraduationCap,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 interface Specialization {
@@ -269,7 +267,7 @@ const specializations: Specialization[] = [
     imageUrl: "/images/certifications/aec.png",
   },
   {
-    id: "10",
+    id: "11",
     title:
       "Autodesk Certified Professional in Civil 3D for Infrastructure Design",
     issuer: "Autodesk",
@@ -322,21 +320,16 @@ export function CertificationsSection() {
   // Scroll to current index
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const cardWidth = 320; // Approximate card width + gap
-      scrollContainerRef.current.scrollTo({
-        left: currentIndex * cardWidth,
-        behavior: "smooth",
-      });
+      const childElement = scrollContainerRef.current.children[currentIndex];
+      if (childElement) {
+        childElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
     }
   }, [currentIndex]);
-
-  const scrollLeft = () => {
-    setCurrentIndex((prev) => (prev === 0 ? allSpecs.length - 1 : prev - 1));
-  };
-
-  const scrollRight = () => {
-    setCurrentIndex((prev) => (prev + 1) % allSpecs.length);
-  };
 
   const SpecializationCard = ({
     spec,
@@ -350,7 +343,7 @@ export function CertificationsSection() {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       viewport={{ once: true }}
-      className="flex-shrink-0 w-80"
+      className="w-[98%] md:w-80 snap-center flex-shrink-0"
     >
       <Card
         className={`h-full ${
@@ -527,22 +520,11 @@ export function CertificationsSection() {
             </h3>
           </div>
 
-          {/* Scrollable Container with Side Navigation */}
           <div className="relative flex items-center">
-            {/* Left Navigation Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scrollLeft}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 h-10 w-10 p-0 shadow-lg bg-card/90 backdrop-blur-sm border-border/50 hover:bg-accent"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-
             {/* Scrollable Container */}
             <div
               ref={scrollContainerRef}
-              className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 mx-12"
+              className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
               style={{ scrollBehavior: "smooth" }}
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
@@ -562,16 +544,6 @@ export function CertificationsSection() {
                 />
               ))}
             </div>
-
-            {/* Right Navigation Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scrollRight}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 h-10 w-10 p-0 shadow-lg bg-card/90 backdrop-blur-sm border-border/50 hover:bg-accent"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Progress Indicators */}
