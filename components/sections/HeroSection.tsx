@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -66,6 +66,7 @@ export function HeroSection() {
             alt="Engineer Coding"
             fill
             priority
+            unoptimized={true}
             className="object-cover rounded-lg"
           />
         </div>
@@ -233,6 +234,7 @@ export function HeroSection() {
                 width={320}
                 height={320}
                 onClick={() => setIsModalOpen(true)}
+                unoptimized={true}
                 className="w-72 h-72 md:w-80 md:h-80 rounded-full object-cover object-[30%_25%] cursor-pointer hover:scale-105 transition-transform shadow-lg border-4 border-primary"
               />
 
@@ -268,6 +270,7 @@ export function HeroSection() {
                   alt="Full Profile"
                   width={1024}
                   height={1024}
+                  unoptimized={true}
                   className="max-w-full max-h-full rounded-lg shadow-xl"
                 />
               </div>

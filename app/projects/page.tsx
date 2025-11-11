@@ -18,6 +18,7 @@ import Link from "next/link";
 import Image from "next/image";
 import projectsData from "@/data/projects.json";
 
+
 // Auto-infer the type of a single project from projectsData
 type Project = (typeof projectsData)[keyof typeof projectsData][number];
 
@@ -51,7 +52,9 @@ export default function Projects() {
   }: {
     project: Project;
     index: number;
-  }) => (
+  }) => {
+
+    return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -78,6 +81,7 @@ export default function Projects() {
               width={800}
               height={450}
               className="w-full h-full object-cover"
+              unoptimized={true}
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
@@ -143,7 +147,7 @@ export default function Projects() {
         </CardContent>
       </Card>
     </motion.div>
-  );
+  )};
 
   return (
     <div className="pt-24 pb-16">
