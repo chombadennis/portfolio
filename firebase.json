@@ -1,16 +1,13 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
   "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "dennis",
+          "region": "us-central1"
+        }
+      }
     ]
   }
 }
