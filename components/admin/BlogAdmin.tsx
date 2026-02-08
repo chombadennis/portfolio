@@ -309,7 +309,7 @@ export default function BlogAdmin() {
       <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-8xl">
         <header className="flex justify-between items-center pb-6 pt-16">
           <h1 className="text-4xl font-bold tracking-tight text-foreground">Blog Dashboard</h1>
-          <Button variant="outline" onClick={async () => { await signOut(); router.push("/"); }}>
+          <Button variant="outline" onClick={() => { signOut(); router.push("/"); }}>
             <LogOut className="h-4 w-4 mr-2" /> Sign Out
           </Button>
         </header>
