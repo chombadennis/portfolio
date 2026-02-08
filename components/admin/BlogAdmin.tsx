@@ -103,7 +103,7 @@ export default function BlogAdmin() {
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
-      router.push("/nesh");
+      router.push("/auth?callbackUrl=/nesh");
     }
   }, [isAdmin, authLoading, router]);
 

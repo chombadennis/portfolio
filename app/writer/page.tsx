@@ -1,16 +1,30 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/AuthContext'; // Import useAuth
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles } from 'lucide-react';
 
 export default function CoverLetterGenerator() {
+  const { isAdmin, isLoading: isAuthLoading, authFetch } = useAuth(); // Use the auth hook
+  const router = useRouter(); // Use the router hook
+
   const [jobDescription, setJobDescription] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Effect to handle redirection
+  useEffect(() => {
+    // If auth is not loading and the user is not an admin, redirect them
+    if (!isAuthLoading && !isAdmin) {
+      router.push('/auth?callbackUrl=/writer'); // Redirect to login page with callback
+    }
+  }, [isAdmin, isAuthLoading, router]);
+
 
   const handleGenerate = async () => {
     if (!jobDescription.trim()) {
@@ -22,26 +36,39 @@ export default function CoverLetterGenerator() {
     setCoverLetter('');
 
     try {
-      const response = await fetch('/api/cover-letter', {
+      const response = await authFetch('/api/cover-letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobDescription }),
       });
 
+      const text = await response.text();
+
       if (!response.ok) {
-        throw new Error('Failed to generate cover letter');
+        // Use the error message from the API, or a default one
+        throw new Error(text || 'Failed to generate cover letter');
       }
 
-      const text = await response.text();
       setCoverLetter(text);
     } catch (error) {
       console.error(error);
-      setCoverLetter('An error occurred. Please check the console.');
+      // Display the error message to the user
+      setCoverLetter(`An error occurred: ${error instanceof Error ? error.message : 'Please check the console.'}`);
     } finally {
       setIsLoading(false);
     }
   };
+  
+  // Render a loading state or null while checking auth
+  if (isAuthLoading || !isAdmin) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
+    );
+  }
 
+  // If user is admin, render the page
   return (
     <div className="container mx-auto pt-8 sm:pt-16 md:pt-32 pb-10 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-4xl mx-auto">

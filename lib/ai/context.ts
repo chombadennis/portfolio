@@ -7,7 +7,7 @@ export const portfolioContext = `
 - Location: Nairobi, Kenya
 - Phone: (254) 112 019751
 - Email: dennis_chomba@outlook.com
-- Portfolio: https://dennis-portfolio-murex.vercel.app/ (Also referred to as my-portfolio)
+- Portfolio: https://dennis--dennisportfolio-35723.us-central1.hosted.app/
 - GitHub: github.com/chombadennis
 - LinkedIn: linkedin.com/in/lukk3vdebarezz99l8yy
 
@@ -19,22 +19,51 @@ Full-stack developer with practical experience building data-driven applications
 // =================================================================================
 // TECHNICAL SKILLS
 // =================================================================================
-- Programming Languages: Python, R, SQL, JavaScript
+- Programming Languages: Python, R, SQL, JavaScript, TypeScript
 - Frameworks & Libraries:
-  - Backend: NodeJS, Express
-  - Frontend: NextJS, React
-  - Data Science & ML: scikit-learn, TensorFlow, Pandas, Numpy, Matplotlib, Seaborn
-- Databases: SQLite, PostgreSQL, MongoDB
+  - Backend: NodeJS, Express, Next.js API Routes
+  - Frontend: Next.js, React, Tailwind CSS, Shadcn/UI
+  - Data Science & ML: scikit-learn, TensorFlow, Pandas, Numpy
+- Databases: SQLite, PostgreSQL, MongoDB, Cloud Firestore, Upstash Redis, Neon Postgres
+- Cloud & Deployment: Google Cloud Run, Firebase (App Hosting, Auth, Firestore, Storage, Functions), Vercel
 - Version Control: Git, GitHub
-- Tools: Jupyter Notebook, Google Colab, Visual Studio Code
+- Tools: Jupyter Notebook, Google Colab, Visual Studio Code, Zod, Genkit
 
 // =================================================================================
 // HIGHLIGHTED PROJECTS
 // =================================================================================
-1.  **Automated Data Collection & Management System**: Developed an automated system for managing heavy construction equipment data. It includes scraping scripts, an SQLite database and dashboards for real-time updates, error handling, scheduling and data normalization for predictive analytics.
-2.  **Building Energy Analysis Platform**: Performed simulation and predictive modeling for building energy efficiency. Developed XGBoost and KNN models to predict thermal comfort and energy consumption. Analyzed weather time series data to understand its effect on building performance.
-3.  **Travel Recommendation Web App**: Designed and deployed a travel recommendation web application using vanilla JavaScript, HTML and CSS. The application recommends travel destinations based on user-searched locations and keywords. It features a responsive UI and is deployed on Vercel.
-4.  **Retail Data Analysis Dashboard**: Created Python-based EDA dashboards using Pandas and Matplotlib to analyze trends, customer behavior and product insights, delivering actionable business intelligence reports for retail clients.
+1.  **DevCollab Hub**
+    - **Company:** NeuralAxis Labs
+    - **Timeline:** December 2025 - Present
+    - **Live URL:** https://hub4devs.com
+    - **Description:** A collaborative platform for developers, creators, and experts to connect, share ideas, and collaborate on building products.
+    - **Key Features:** Rich developer profiles, project listings for talent discovery, smart discovery filters, AI-powered collaborator matching, real-time private chat, and AI-enhanced insights (for project descriptions, profile summaries).
+    - **Tech Stack:**
+        - **Framework:** Next.js (App Router)
+        - **Language:** TypeScript
+        - **Styling:** Tailwind CSS & ShadCN UI
+        - **Backend & Database:** Firebase (Authentication, Firestore, Cloud Storage, Cloud Functions)
+        - **Generative AI:** Google AI & Genkit
+        - **Deployment:** Firebase App Hosting
+
+2.  **My Portfolio**
+    - **Company:** NeuralAxis Labs
+    - **Timeline:** October 2025 - January 2026
+    - **Live URL:** https://dennis--dennisportfolio-35723.us-central1.hosted.app/
+    - **GitHub URL:** https://github.com/chombadennis/portfolio.git
+    - **Description:** This portfolio is a full-stack Next.js 14 application written in TypeScript, a server-centric architecture using the App Router.
+    - **Tech Stack:**
+        - **Frontend:** Next.js, React, Tailwind CSS, and Shadcn/UI.
+        - **Backend & Databases:** Next.js API Routes, Cloud Firestore (primary database), Upstash Redis (in-memory data store for rate-limiting), and Firebase Authentication for security and role-based access.
+        - **Deployment:** Google Cloud Run through Firebase App Hosting.
+    - **Google AI Integration:**
+        - **AI Assistant (Neneh):** An interactive chatbot trained on the portfolio's content.
+        - **AI Cover Letter Generator:** A private tool that uses Gemini to automatically generate a tailored cover letter from a job description based on the resume and projects.
+
+3.  **Datum – Cloud File Storage & Management**
+    - **Company:** NeuralAxis Labs
+    - **Timeline:** July 2025 - November 2025
+    - **Description:** A modern cloud-based file storage and management platform built with Next.js and TypeScript. Supports folder navigation, file previews, and secure sharing, powered by a Firebase backend including Authentication, Firestore for database, and Cloud Storage for file buckets. It uses Zod for strict input validation and features a responsive UI built with shadcn/ui.
 
 // =================================================================================
 // PROFESSIONAL EXPERIENCE

@@ -1,5 +1,72 @@
+
 {
   "development": [
+    {
+      "title": "DevCollab Hub",
+      "description": "A collaborative platform for developers to connect and build products. Features include developer profiles, project listings, AI-powered matching, and real-time chat. Built with Next.js, Firebase (Auth, Firestore, Storage, Functions), and Google AI (Genkit) for intelligent features.",
+      "image": "/images/projects/Bi3bBaSahLCf10ELjxBc4GqFjNuUBMDcf8PK95B3.png",
+      "technologies": [
+        "Next.js (App Router)",
+        "TypeScript",
+        "Tailwind CSS",
+        "ShadCN UI",
+        "Firebase Authentication",
+        "Firestore",
+        "Firebase Storage",
+        "Cloud Functions",
+        "Google AI",
+        "Genkit",
+        "Firebase App Hosting"
+      ],
+      "liveUrl": "https://hub4devs.com",
+      "githubUrl": "",
+      "date": "2026",
+      "featured": true
+    },
+    {
+      "title": "My Portfolio",
+      "description": "A full-stack Next.js 14 portfolio featuring an AI Assistant (chatbot) and an AI Cover Letter Generator. Built with a server-centric App Router architecture, it uses Cloud Firestore for the blog, Upstash Redis for rate-limiting, and is secured by Firebase Authentication. Deployed on Google Cloud Run via Firebase App Hosting.",
+      "image": "/images/projects/xgkKuOH3nLrg6BG4YYFqxexhGiGrsJ4XHpsmMxW8.png",
+      "technologies": [
+        "Next.js 14",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "Shadcn/UI",
+        "Next.js API Routes",
+        "Cloud Firestore",
+        "Upstash Redis",
+        "Firebase Authentication",
+        "Google Cloud Run",
+        "Firebase App Hosting",
+        "Google AI (Gemini Pro)"
+      ],
+      "liveUrl": "https://dennis--dennisportfolio-35723.us-central1.hosted.app/",
+      "githubUrl": "https://github.com/chombadennis/portfolio.git",
+      "date": "2026",
+      "featured": true
+    },
+    {
+      "title": "Datum – Cloud File Storage & Management",
+      "description": "A modern cloud-based file storage and management platform built with Next.js and TypeScript. Supports folder navigation, file previews, and secure sharing, powered by a Firebase backend including Authentication, Firestore for database, and Cloud Storage for file buckets. It uses Zod for strict input validation and features a responsive UI built with shadcn/ui.",
+      "image": "/images/projects/datumImg.png",
+      "technologies": [
+        "Next.js",
+        "TypeScript",
+        "Firebase Authentication",
+        "Firestore",
+        "Firebase Storage",
+        "Google Cloud",
+        "Zod",
+        "ShadCN UI",
+        "Lucide Icons",
+        "Tailwind CSS"
+      ],
+      "liveUrl": "https://datum-cyan.vercel.app/",
+      "githubUrl": "https://github.com/chombadennis/datum.git",
+      "date": "2025",
+      "featured": true
+    },
     {
       "title": "Truck HOS Planner — ELD & Route Compliance",
       "description": "A full-stack app that plans truck trips and enforces FMCSA hours-of-service rules while producing printable ELD (RODS) sheets.Backend: Django REST API with a rule-driven HOS engine implementing the 11-hour driving limit and 14-hour window, a required 30-minute break after 8 hours, rolling 70/8 and 60/7 weekly limits, a 34-hour restart and sleeper-berth split logic; routing uses OpenRouteService when configured with a haversine fallback, reverse geocoding uses Nominatim with caching.Frontend: React single-page app using Leaflet with OpenStreetMap tiles for mapping, auto-zoomed route fit, custom colored markers for Start Pickup and Dropoff, an interactive TripForm that accepts coordinates or lat/lng and an SVG ELD renderer that buckets events by day and shows remarks for each duty change.Exports: dom-to-image-more and jsPDF for PNG and multi-page PDF output.Includes admin models, environment-driven configuration, unit test skeletons and deployment notes for Render and Vercel.",
@@ -47,27 +114,6 @@
       ],
       "liveUrl": "https://jseph.onrender.com/",
       "githubUrl": "https://github.com/dennismuhnene/responsive-engineer-hub",
-      "date": "2025",
-      "featured": true
-    },
-    {
-      "title": "Datum – Cloud File Storage & Management",
-      "description": "A modern cloud-based file storage and management platform built with Next.js and TypeScript. Supports folder navigation, file previews, and secure sharing, powered by Neon Postgres for persistent data storage, ImageKit for optimized image delivery, and Zod for strict input validation. Includes role-based access controls, a responsive UI built with shadcn/ui, and efficient file operations through an ORM for structured database access.",
-      "image": "/images/projects/datumImg.png",
-      "technologies": [
-        "Next.js",
-        "TypeScript",
-        "tsx",
-        "Neon Postgres",
-        "ImageKit",
-        "Clerk",
-        "Zod",
-        "Drizzle ORM",
-        "ShadCN UI",
-        "Lucide Icons"
-      ],
-      "liveUrl": "https://datum-cyan.vercel.app/",
-      "githubUrl": "https://github.com/chombadennis/datum.git",
       "date": "2025",
       "featured": true
     },

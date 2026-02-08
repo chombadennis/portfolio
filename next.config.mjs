@@ -18,25 +18,6 @@ const nextConfig = {
       "@react-email/render"
     ],
   },
-
-  async rewrites() {
-    return [
-      {
-        source: '/nesh',
-        destination: '/auth',
-      },
-    ]
-  },
-
-  async redirects() {
-    return [
-      {
-        source: '/auth',
-        destination: '/404',
-        permanent: false,
-      },
-    ]
-  },
 };
 
 export default nextConfig;
