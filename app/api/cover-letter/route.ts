@@ -17,9 +17,10 @@ let auth: ReturnType<typeof getAuth> | undefined;
 
 function initializeFirebaseAdmin() {
     if (getApps().length === 0) {
-        const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        // CORRECTED: Use the variable name defined in apphosting.yaml
+        const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
         if (!serviceAccountKey) {
-            throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is missing.");
+            throw new Error("APP_SERVICE_ACCOUNT_KEY is missing.");
         }
         adminApp = initializeApp({ credential: cert(JSON.parse(serviceAccountKey)) });
     } else {
