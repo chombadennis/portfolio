@@ -85,7 +85,7 @@ export function Navigation() {
     >
       <div className="container mx-auto px-6">
         <nav className="flex items-center justify-between h-16">
-n          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center text-primary-foreground font-bold text-sm transition-all duration-300 group-hover:scale-105 group-hover:rotate-3 shadow-lg">
               DC
             </div>

@@ -35,7 +35,7 @@ const specializations: Specialization[] = [
     issuer: "IBM",
     issuerUrl:
       "https://www.coursera.org/account/accomplishments/specialization/T3SFIFS2ZR06",
-    date: "Jun 2025",
+    date: "July 2025",
     credentialId: "T3SFIFS2ZR06",
     credentialUrl:
       "https://www.coursera.org/account/accomplishments/specialization/certificate/T3SFIFS2ZR06",
@@ -267,7 +267,7 @@ const specializations: Specialization[] = [
     imageUrl: "/images/certifications/aec.png",
   },
   {
-    id: "11",
+    id: "10",
     title:
       "Autodesk Certified Professional in Civil 3D for Infrastructure Design",
     issuer: "Autodesk",
@@ -309,9 +309,12 @@ export function CertificationsSection() {
   // Auto-scroll functionality
   useEffect(() => {
     if (!isPaused && allSpecs.length > 1) {
+      const speed = window.innerWidth < 640 ? 6000 : 4000;
+      // 6s on mobile (smaller screens), 4s on tablets/desktop
+
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % allSpecs.length);
-      }, 4000); // Change every 4 seconds
+      }, speed);
 
       return () => clearInterval(interval);
     }
@@ -320,12 +323,14 @@ export function CertificationsSection() {
   // Scroll to current index
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const childElement = scrollContainerRef.current.children[currentIndex];
-      if (childElement) {
-        childElement.scrollIntoView({
+      const firstCard = scrollContainerRef.current.querySelector(
+        "div.flex-shrink-0"
+      ) as HTMLElement;
+      if (firstCard) {
+        const cardWidth = firstCard.offsetWidth + 24; // width + gap (gap-6 = 1.5rem = 24px)
+        scrollContainerRef.current.scrollTo({
+          left: currentIndex * cardWidth,
           behavior: "smooth",
-          block: "nearest",
-          inline: "center",
         });
       }
     }
@@ -343,7 +348,7 @@ export function CertificationsSection() {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       viewport={{ once: true }}
-      className="w-[98%] md:w-80 snap-center flex-shrink-0"
+      className="flex-shrink-0 w-[95vw] sm:w-80 snap-start"
     >
       <Card
         className={`h-full ${
@@ -467,8 +472,9 @@ export function CertificationsSection() {
             Courses & Specializations
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Professional <span className="gradient-text">Specializations</span>
+            Learning <span className="gradient-text">Exploration</span>
           </h2>
+
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Continuous learning through industry-recognized courses and
             specialized programs from leading universities and technology
@@ -506,7 +512,7 @@ export function CertificationsSection() {
               }
             </div>
             <div className="text-sm text-muted-foreground">
-              Skills Acquired & Polishing
+              Dynamic Learning & Skills Spectrum
             </div>
           </div>
         </motion.div>
@@ -520,11 +526,12 @@ export function CertificationsSection() {
             </h3>
           </div>
 
+          {/* Scrollable Container with Side Navigation */}
           <div className="relative flex items-center">
             {/* Scrollable Container */}
             <div
               ref={scrollContainerRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
+              className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 px-6 snap-x snap-mandatory"
               style={{ scrollBehavior: "smooth" }}
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
@@ -551,10 +558,10 @@ export function CertificationsSection() {
             {allSpecs.map((_, index) => (
               <button
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex
-                    ? "bg-primary w-6"
-                    : "bg-muted-foreground/30"
+                    ? "bg-primary w-6 sm:w-8"
+                    : "bg-muted-foreground/30 w-2 sm:w-3"
                 }`}
                 onClick={() => setCurrentIndex(index)}
               />

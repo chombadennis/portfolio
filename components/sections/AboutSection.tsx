@@ -9,9 +9,9 @@ import {
   Building,
   Brain,
   Rocket,
-  Users,
   Award,
   Target,
+  Search,
 } from "lucide-react";
 
 const skills = [
@@ -52,26 +52,23 @@ const values = [
   {
     icon: Target,
     title: "Problem Solving",
-    description:
-      "Approaching complex challenges with analytical thinking and innovative solutions.",
+    description: "Transforming tasks into practical outcomes.",
   },
   {
-    icon: Users,
-    title: "Collaboration",
+    icon: Search,
+    title: "Curiosity",
     description:
-      "Working effectively in diverse teams to achieve common goals and shared success.",
+      "Driven to discover, learn, and apply new ideas and approaches in real-world projects.",
   },
   {
     icon: Rocket,
     title: "Innovation",
-    description:
-      "Continuously exploring new technologies and methodologies to stay ahead.",
+    description: "Turning creative concepts into useful results.",
   },
   {
     icon: Award,
     title: "Excellence",
-    description:
-      "Committed to delivering high-quality work that exceeds expectations.",
+    description: "Every outcome reflects skill and professionalism",
   },
 ];
 
@@ -90,13 +87,12 @@ export function AboutSection() {
             About Me
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Bridging <span className="gradient-text">Disciplines</span>
+            Building <span className="gradient-text">with Insight</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            With a unique blend of civil engineering foundation and modern
-            software expertise, I bring a distinctive perspective to technology
-            solutions. My journey spans traditional engineering principles to
-            cutting-edge data science and full-stack development.
+            Leveraging engineering principles and technological expertise, I
+            design approaches that are thoughtful, practical, innovative and
+            actionable
           </p>
         </motion.div>
 
@@ -113,29 +109,29 @@ export function AboutSection() {
             <div className="space-y-4 text-muted-foreground">
               <p>
                 Starting with a foundation in{" "}
-                <strong className="text-foreground">civil engineering</strong>,
+                <strong className="text-foreground">Civil Engineering</strong>,
                 I developed strong analytical and problem-solving skills working
                 on infrastructure projects. This experience taught me the
                 importance of precision, planning and systematic thinking.
               </p>
               <p>
-                My transition into{" "}
+                My blend of{" "}
                 <strong className="text-foreground">
                   software development
                 </strong>{" "}
-                was driven by a passion for the potential of technology in
-                addressing problems in the society. I specialized in the MERN
+                is driven by curiosity and passion for the potential of
+                technology in addressing problems in the society. I use the MERN
                 stack and modern web technologies, building scalable
                 applications that serve real business needs.
               </p>
               <p>
                 The evolution into{" "}
                 <strong className="text-foreground">
-                  data science and machine learning
+                  Data Science and Machine Learning
                 </strong>{" "}
                 represents my commitment to staying at the forefront of
-                technology. I combine domain expertise with data-driven insights
-                to create intelligent solutions.
+                technology. I combine domain expertise with insights from data
+                to create creative solutions.
               </p>
             </div>
 
@@ -221,7 +217,7 @@ export function AboutSection() {
           <div className="text-center">
             <h3 className="text-2xl font-semibold mb-4">Core Values</h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              The principles that guide my work and collaboration approach
+              The standards I follow to grow, contribute, and deliver.
             </p>
           </div>
 
