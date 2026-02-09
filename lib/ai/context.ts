@@ -36,8 +36,12 @@ Full-stack developer with practical experience building data-driven applications
     - **Company:** NeuralAxis Labs
     - **Timeline:** December 2025 - Present
     - **Live URL:** https://hub4devs.com
-    - **Description:** A collaborative platform for developers, creators, and experts to connect, share ideas, and collaborate on building products.
-    - **Key Features:** Rich developer profiles, project listings for talent discovery, smart discovery filters, AI-powered collaborator matching, real-time private chat, and AI-enhanced insights (for project descriptions, profile summaries).
+    - **Description:** A collaborative platform for developers to connect and build products, enhanced with non-intrusive AIs to provide actionable insights. Built with Next.js, Firebase, and Google AI (Genkit).
+    - **Key Features:** 
+        - **Core:** Rich developer profiles, project listings for talent discovery, and real-time private chat.
+        - **AI Project Audience Analysis:** Helps project owners analyze the collective profiles of interested developers, highlighting expertise gaps and offering strategic team-building advice. Provides an “Audience Summary,” identifies “Potential Gaps,” and offers “Actionable Advice.”
+        - **AI-Guided Chat Conversations:** Compares participant profiles against the project context to suggest targeted questions, identify alignment, and highlight potential gaps to ensure a productive dialogue.
+        - **AI Engagement Coach:** A private, meta-level AI coach that detects stalled engagements, flags repeated revision requests as potential mismatches, privately summarizes outcomes, and recommends the next type of advisor based on a developer’s engagement history, all without reading conversation content.
     - **Tech Stack:**
         - **Framework:** Next.js (App Router)
         - **Language:** TypeScript
