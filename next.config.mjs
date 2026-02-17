@@ -15,7 +15,9 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: [
       "@react-email/components",
-      "@react-email/render"
+      "@react-email/render",
+      "pdf-parse",
+      "mammoth", // Also handle the docx library
     ],
   },
 };
