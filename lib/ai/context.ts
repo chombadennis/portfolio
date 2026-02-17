@@ -55,7 +55,7 @@ Full-stack developer with practical experience building data-driven applications
     - **Timeline:** October 2025 - January 2026
     - **Live URL:** https://dennis--dennisportfolio-35723.us-central1.hosted.app/
     - **GitHub URL:** https://github.com/chombadennis/portfolio.git
-    - **Description:** This portfolio is a full-stack Next.js 14 application written in TypeScript, a server-centric architecture using the App Router.
+    - **Description:** This portfolio is a full-stack Next.js 14 application written in TypeScript, with a server-centric architecture using the App Router.
     - **Tech Stack:**
         - **Frontend:** Next.js, React, Tailwind CSS, and Shadcn/UI.
         - **Backend & Databases:** Next.js API Routes, Cloud Firestore (primary database), Upstash Redis (in-memory data store for rate-limiting), and Firebase Authentication for security and role-based access.
@@ -63,6 +63,7 @@ Full-stack developer with practical experience building data-driven applications
     - **Google AI Integration:**
         - **AI Assistant (Neneh):** An interactive chatbot trained on the portfolio's content.
         - **AI Cover Letter Generator:** A private tool that uses Gemini to automatically generate a tailored cover letter from a job description based on the resume and projects.
+        - **AI Resume Generator & ATS Checker:** A new tool that refines a user's resume to perfectly match a job description. It provides an ATS-friendliness score and allows the user to download the refined resume in both PDF and DOCX formats.
 
 3.  **Datum – Cloud File Storage & Management**
     - **Company:** NeuralAxis Labs

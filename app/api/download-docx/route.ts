@@ -121,11 +121,13 @@ export async function POST(req: Request) {
         });
 
         const buffer = await Packer.toBuffer(doc);
+        const uint8Array = new Uint8Array(buffer);
 
-        return new NextResponse(buffer, {
+        const blob = new Blob([uint8Array], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+        return new NextResponse(blob, {
             status: 200,
             headers: {
-                'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Content-Disposition': 'attachment; filename="resume.docx"',
             },
         });

@@ -25,7 +25,7 @@
     },
     {
       "title": "My Portfolio",
-      "description": "A full-stack Next.js 14 portfolio featuring an AI Assistant (chatbot) and an AI Cover Letter Generator. Built with a server-centric App Router architecture, it uses Cloud Firestore for the blog, Upstash Redis for rate-limiting, and is secured by Firebase Authentication. Deployed on Google Cloud Run via Firebase App Hosting.",
+      "description": "A full-stack Next.js 14 portfolio featuring an AI Assistant (chatbot), an AI Cover Letter Generator, and a new AI-powered Resume Generator with ATS Checker. This new tool refines resumes to match job descriptions, provides ATS-friendliness scores, and allows downloads in both PDF and DOCX formats. The portfolio is built with a server-centric App Router architecture, uses Cloud Firestore for the blog, Upstash Redis for rate-limiting, and is secured by Firebase Authentication. Deployed on Google Cloud Run via Firebase App Hosting.",
       "image": "/images/projects/myPortfolio_2.png",
       "technologies": [
         "Next.js 14",
