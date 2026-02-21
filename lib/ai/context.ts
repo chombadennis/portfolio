@@ -32,7 +32,19 @@ Full-stack developer with practical experience building data-driven applications
 // =================================================================================
 // HIGHLIGHTED PROJECTS
 // =================================================================================
-1.  **DevCollab Hub**
+1.  **Truck HOS Planner V2**
+    - **Company:** NeuralAxis Labs
+    - **Timeline:** January 2026 - Present
+    - **Live URL:** https://truck-app-seven.vercel.app/
+    - **GitHub URL:** https://github.com/chombadennis/truck-app
+    - **Description:** An upgraded full-stack application for Hours of Service (HOS) compliance, featuring a decoupled architecture. The backend is a Django REST API deployed on Render while the frontend is a React SPA deployed on Vercel. It generates compliant trip plans based on FMCSA rules, visualizes routes on an interactive Leaflet map and renders daily ELD log sheets that can be exported to PDF. The application is designed to handle potential backend cold-starts from Render's free tier by using a client-side loading indicator to ensure a smooth user experience.
+    - **Tech Stack:**
+        - **Backend:** Django, Django REST Framework, Gunicorn, PostgreSQL (via Neon)
+        - **Frontend:** React, Tailwind CSS, Axios, Leaflet.js
+        - **Mapping & Geocoding:** OpenStreetMap, OpenRouteService, Nominatim
+        - **Deployment:** Render (Backend), Vercel (Frontend)
+
+2.  **DevCollab Hub**
     - **Company:** NeuralAxis Labs
     - **Timeline:** December 2025 - Present
     - **Live URL:** https://hub4devs.com
@@ -50,7 +62,7 @@ Full-stack developer with practical experience building data-driven applications
         - **Generative AI:** Google AI & Genkit
         - **Deployment:** Firebase App Hosting
 
-2.  **My Portfolio**
+3.  **My Portfolio**
     - **Company:** NeuralAxis Labs
     - **Timeline:** October 2025 - January 2026
     - **Live URL:** https://dennis--dennisportfolio-35723.us-central1.hosted.app/
@@ -65,7 +77,7 @@ Full-stack developer with practical experience building data-driven applications
         - **AI Cover Letter Generator:** A private tool that uses Gemini to automatically generate a tailored cover letter from a job description based on the resume and projects.
         - **AI Resume Generator & ATS Checker:** A new tool that refines a user's resume to perfectly match a job description. It provides an ATS-friendliness score and allows the user to download the refined resume in both PDF and DOCX formats.
 
-3.  **Datum – Cloud File Storage & Management**
+4.  **Datum – Cloud File Storage & Management**
     - **Company:** NeuralAxis Labs
     - **Timeline:** July 2025 - November 2025
     - **Description:** A modern cloud-based file storage and management platform built with Next.js and TypeScript. Supports folder navigation, file previews, and secure sharing, powered by a Firebase backend including Authentication, Firestore for database, and Cloud Storage for file buckets. It uses Zod for strict input validation and features a responsive UI built with shadcn/ui.

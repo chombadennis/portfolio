@@ -2,6 +2,31 @@
 {
   "development": [
     {
+      "title": "Truck HOS Planner V2",
+      "description": "An upgraded full-stack application for Hours of Service (HOS) compliance, featuring a decoupled architecture with a Django REST API backend (on Render) and a React SPA frontend (on Vercel). The app generates compliant trip plans based on FMCSA rules, visualizes routes on a Leaflet map and renders daily ELD log sheets for PDF export. It gracefully handles potential backend cold-starts from Render's free tier with a client-side loading indicator.",
+      "image": "/images/projects/truck-app-V2.png",
+      "technologies": [
+        "React",
+        "Tailwind CSS",
+        "Leaflet.js",
+        "Axios",
+        "jsPDF",
+        "html2canvas",
+        "Django",
+        "Django REST Framework",
+        "Gunicorn",
+        "PostgreSQL (Neon)",
+        "OpenRouteService",
+        "Nominatim",
+        "Vercel",
+        "Render"
+      ],
+      "liveUrl": "https://truck-app-seven.vercel.app/",
+      "githubUrl": "https://github.com/chombadennis/truck-app",
+      "date": "2026",
+      "featured": true
+    },
+    {
       "title": "DevCollab Hub",
       "description": "A collaborative platform for developers to connect and build products, enhanced with non-intrusive AIs to provide actionable insights. Features include rich developer profiles, project listings, and real-time chat, alongside AI-powered tools like (1.) Project audience analysis to help owners in analyzing the collective profiles of the interested users, highlighting potential gaps in expertise against the project's requirements, and offering strategic advice on how to build a balanced team. This feature provides an “Audience Summary,” identifies “Potential Gaps,” and offers “Actionable Advice.”; (2.) Guided chat conversations that compares the participants' profiles against the project/role context and suggests targeted questions, identifies points of alignment, and highlights potential gaps to discuss, ensuring a more productive dialogue., and (3.) An engagement coach AI system that operates at the engagement meta-level without reading content. Its capabilities include: • Detect stalled engagements (based on milestone inactivity). • Flag repeated revision requests as a potential mismatch. • Privately summarize completed outcomes for the developer. • Recommend the next type of advisor based on the developer’s engagement history Its role is to act as a private coach. Built with Next.js, Firebase, and Google AI (Genkit).",
       "image": "/images/projects/devcollabhub.png",
