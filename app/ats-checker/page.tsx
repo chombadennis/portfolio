@@ -1,12 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/AuthContext'; // Corrected Path
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Upload, FileDown, Rocket, Info } from 'lucide-react';
+import { Upload, FileDown, Rocket, Info, Loader2, LogOut } from 'lucide-react';
 
 export default function ATSCheckerPage() {
+    const { isAdmin, isLoading: isAuthLoading, authFetch, signOut } = useAuth();
+    const router = useRouter();
+
     const [jobDescription, setJobDescription] = useState('');
     const [resumeFile, setResumeFile] = useState<File | null>(null);
     const [suggestions, setSuggestions] = useState('');
@@ -23,6 +28,12 @@ export default function ATSCheckerPage() {
     const [generateError, setGenerateError] = useState<string | null>(null);
     const [refineError, setRefineError] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (!isAuthLoading && !isAdmin) {
+            router.push('/auth?callbackUrl=/ats-checker');
+        }
+    }, [isAdmin, isAuthLoading, router]);
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             setResumeFile(event.target.files[0]);
@@ -34,28 +45,19 @@ export default function ATSCheckerPage() {
             setParseError('Please upload a resume file first.');
             return;
         }
-
         setIsParsing(true);
         setParseError(null);
         setParsedResume('');
-
         const formData = new FormData();
         formData.append('resume', resumeFile);
-
         try {
-            const response = await fetch('/api/parse-resume', {
-                method: 'POST',
-                body: formData,
-            });
-
+            const response = await fetch('/api/parse-resume', { method: 'POST', body: formData });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to parse resume.');
             }
-
             const data = await response.json();
             setParsedResume(data.resumeText);
-
         } catch (err: any) {
             setParseError(err.message);
             console.error('Error parsing resume:', err);
@@ -69,31 +71,24 @@ export default function ATSCheckerPage() {
             setGenerateError('Please provide both a job description and a resume file.');
             return;
         }
-
         setIsGenerating(true);
         setGenerateError(null);
         setSuggestions('');
-
         const formData = new FormData();
         formData.append('jobDescription', jobDescription);
         formData.append('resume', resumeFile);
-
         try {
-            const response = await fetch('/api/ats-checker', {
+            const response = await authFetch('/api/ats-checker', {
                 method: 'POST',
                 body: formData,
             });
-
+            const text = await response.text();
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'An error occurred while generating suggestions.');
+                throw new Error(text || 'Failed to generate suggestions.');
             }
-
-            const suggestionsText = await response.text();
-            setSuggestions(suggestionsText);
-
+            setSuggestions(text);
         } catch (err: any) {
-            setGenerateError(err.message);
+            setGenerateError(`An error occurred: ${err.message}`);
             console.error('Error generating suggestions:', err);
         } finally {
             setIsGenerating(false);
@@ -105,31 +100,24 @@ export default function ATSCheckerPage() {
             setRefineError('Job description and resume are required.');
             return;
         }
-
         setIsRefining(true);
         setRefineError(null);
         setRefinedResume('');
-
         const formData = new FormData();
         formData.append('jobDescription', jobDescription);
         formData.append('resume', resumeFile);
-
         try {
-            const response = await fetch('/api/generate-resume', {
+            const response = await authFetch('/api/generate-resume', {
                 method: 'POST',
                 body: formData,
             });
-
+            const text = await response.text();
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(JSON.parse(errorText).message || 'Failed to generate refined resume.');
+                throw new Error(text || 'Failed to generate refined resume.');
             }
-
-            const refinedText = await response.text();
-            setRefinedResume(refinedText);
-
+            setRefinedResume(text);
         } catch (err: any) {
-            setRefineError(err.message);
+            setRefineError(`An error occurred: ${err.message}`);
             console.error('Error refining resume:', err);
         } finally {
             setIsRefining(false);
@@ -138,7 +126,6 @@ export default function ATSCheckerPage() {
 
     const handleDownloadPdf = async () => {
         if (!refinedResume) return;
-
         setIsDownloading(true);
         try {
             const response = await fetch('/api/download-pdf', {
@@ -148,11 +135,9 @@ export default function ATSCheckerPage() {
                 },
                 body: JSON.stringify({ resumeText: refinedResume }),
             });
-
             if (!response.ok) {
                 throw new Error('Failed to download PDF.');
             }
-
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -162,7 +147,6 @@ export default function ATSCheckerPage() {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-
         } catch (error) {
             console.error('Error downloading PDF:', error);
         } finally {
@@ -172,7 +156,6 @@ export default function ATSCheckerPage() {
 
     const handleDownloadDocx = async () => {
         if (!refinedResume) return;
-
         setIsDownloadingDocx(true);
         try {
             const response = await fetch('/api/download-docx', {
@@ -182,11 +165,9 @@ export default function ATSCheckerPage() {
                 },
                 body: JSON.stringify({ resumeText: refinedResume }),
             });
-
             if (!response.ok) {
                 throw new Error('Failed to download DOCX.');
             }
-
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -196,25 +177,28 @@ export default function ATSCheckerPage() {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-
         } catch (error) {
             console.error('Error downloading DOCX:', error);
         } finally {
             setIsDownloadingDocx(false);
         }
     };
-    
+
+    if (isAuthLoading || !isAdmin) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-10 w-10 animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto p-4 md:p-8 pt-24 md:pt-32">
-            <header className="text-center mb-12">
+            <header className="flex justify-between items-center mb-12">
                 <h1 className="text-3xl font-bold">ATS Resume Checker</h1>
-                <div className="mt-4 max-w-3xl mx-auto bg-muted/50 border rounded-lg p-4 flex items-center justify-center space-x-3">
-                    <Info className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Optimize your resume to get past automated screeners and land more interviews.
-                    </p>
-                </div>
+                 <Button variant="outline" onClick={() => { signOut(); router.push("/"); }}>
+                    <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                </Button>
             </header>
 
             <div className="max-w-4xl mx-auto space-y-8">

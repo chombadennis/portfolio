@@ -1,11 +1,54 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { promises as fs } from 'fs';
 import path from 'path';
 import mammoth from 'mammoth';
+import { initializeApp, getApps, App, cert } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 // Correctly import the PDFParse class from 'pdf-parse' using require, as per the v2 documentation
 const { PDFParse } = require('pdf-parse');
+
+// --- START: Firebase Admin Initialization (Consistent with /api/cover-letter) ---
+let adminApp: App | undefined;
+let auth: ReturnType<typeof getAuth> | undefined;
+
+function initializeFirebaseAdmin() {
+    // Check if the app is already initialized to avoid re-initialization errors
+    if (getApps().length === 0) {
+        const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
+        if (!serviceAccountKey) {
+            throw new Error("Firebase Admin service account key is not set.");
+        }
+        try {
+            adminApp = initializeApp({ credential: cert(JSON.parse(serviceAccountKey)) });
+        } catch (e: any) {
+            throw new Error(`Failed to parse Firebase service account key: ${e.message}`);
+        }
+    } else {
+        adminApp = getApps()[0];
+    }
+    auth = getAuth(adminApp);
+}
+
+const ALLOWED_EMAIL = (process.env.NEXT_PUBLIC_ALLOWED_EMAIL || "").toLowerCase();
+
+async function getIsAdmin(req: NextRequest): Promise<boolean> {
+    if (!auth) return false;
+    const authorization = req.headers.get("authorization");
+    if (authorization) {
+        try {
+            const token = authorization.split("Bearer ")[1];
+            const decodedToken = await auth.verifyIdToken(token);
+            return !!decodedToken.email && decodedToken.email.toLowerCase() === ALLOWED_EMAIL;
+        } catch {
+            // Token is invalid or expired
+            return false;
+        }
+    }
+    return false;
+}
+// --- END: Firebase Admin Initialization ---
 
 // Initialize the Gemini AI model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -15,7 +58,20 @@ async function getFileContent(filePath: string): Promise<string> {
     return await fs.readFile(absolutePath, 'utf-8');
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    // 1. Initialize and check authentication first
+    try {
+        initializeFirebaseAdmin();
+        const isAdmin = await getIsAdmin(req);
+        if (!isAdmin) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+    } catch (e: any) {
+        console.error("Authentication check failed:", e);
+        return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+    }
+
+    // --- Main API Logic from here ---
     try {
         const formData = await req.formData();
         const jobDescription = formData.get('jobDescription') as string;
@@ -29,7 +85,6 @@ export async function POST(req: Request) {
         const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
         let resumeText = '';
         if (resumeFile.type === 'application/pdf') {
-            // Use the pdf-parse v2 API
             const parser = new PDFParse({ data: resumeBuffer });
             const data = await parser.getText();
             resumeText = data.text;
@@ -40,7 +95,7 @@ export async function POST(req: Request) {
             return new NextResponse('Unsupported file type', { status: 400 });
         }
 
-        // 2. Read Additional Context from your project
+        // 2. Read Additional Context
         const projectsJson = await getFileContent('data/projects.json');
         const contextTs = await getFileContent('lib/ai/context.ts');
 
@@ -72,13 +127,12 @@ export async function POST(req: Request) {
             6.  **Formatting**: Do not use any Markdown formatting (no '###', '**', '*', or '-'). Respond in plain text only, using line breaks to separate ideas.
         `;
 
-        // 4. Generate Content with Gemini - Use the correct model name
+        // 4. Generate Content with Gemini
         const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = await response.text();
 
-        // Return only the AI recommendations as plain text
         return new NextResponse(text, { 
             status: 200,
             headers: { 'Content-Type': 'text/plain' }
