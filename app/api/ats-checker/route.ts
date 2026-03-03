@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
 import { promises as fs } from 'fs';
 import path from 'path';
 import mammoth from 'mammoth';
 import { initializeApp, getApps, App, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
-// Correctly import the PDFParse class from 'pdf-parse' using require, as per the v2 documentation
+// Correctly import the PDFParse class from 'pdf-parse' using require
 const { PDFParse } = require('pdf-parse');
 
-// --- START: Firebase Admin Initialization (Consistent with /api/cover-letter) ---
+// --- START: Firebase Admin Initialization ---
 let adminApp: App | undefined;
 let auth: ReturnType<typeof getAuth> | undefined;
 
 function initializeFirebaseAdmin() {
-    // Check if the app is already initialized to avoid re-initialization errors
     if (getApps().length === 0) {
         const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
         if (!serviceAccountKey) {
@@ -42,7 +41,6 @@ async function getIsAdmin(req: NextRequest): Promise<boolean> {
             const decodedToken = await auth.verifyIdToken(token);
             return !!decodedToken.email && decodedToken.email.toLowerCase() === ALLOWED_EMAIL;
         } catch {
-            // Token is invalid or expired
             return false;
         }
     }
@@ -50,7 +48,6 @@ async function getIsAdmin(req: NextRequest): Promise<boolean> {
 }
 // --- END: Firebase Admin Initialization ---
 
-// Initialize the Gemini AI model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 async function getFileContent(filePath: string): Promise<string> {
@@ -58,20 +55,61 @@ async function getFileContent(filePath: string): Promise<string> {
     return await fs.readFile(absolutePath, 'utf-8');
 }
 
+
+// --- START: Production-Grade Error Handling ---
+async function generateWithRetry(model: any, prompt: string, retries = 3) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out')), 65000)
+      );
+      
+      const result = await Promise.race([
+        model.generateContent(prompt),
+        timeoutPromise
+      ]);
+      return result;
+
+    } catch (err: any) {
+      if (err.message === 'Request timed out') {
+          console.warn(`ATS Checker API: generateContent timed out (Attempt ${attempt + 1})`);
+           if (attempt < retries - 1) {
+              const delay = 1000 * Math.pow(2, attempt);
+              await new Promise(res => setTimeout(res, delay));
+              attempt++;
+              continue;
+           } else {
+              throw new GoogleGenerativeAIFetchError("The AI service timed out after multiple retries.", 503);
+           }
+      }
+
+      if (err instanceof GoogleGenerativeAIFetchError && err.status === 503 && attempt < retries - 1) {
+        const delay = 1000 * Math.pow(2, attempt);
+        console.warn(`ATS Checker API: Received 503, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
+        await new Promise(res => setTimeout(res, delay));
+        attempt++;
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+// --- END: Production-Grade Error Handling ---
+
+
 export async function POST(req: NextRequest) {
-    // 1. Initialize and check authentication first
     try {
         initializeFirebaseAdmin();
         const isAdmin = await getIsAdmin(req);
         if (!isAdmin) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return new NextResponse("Unauthorized", { status: 401, headers: { 'Content-Type': 'text/plain' } });
         }
     } catch (e: any) {
         console.error("Authentication check failed:", e);
-        return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+        return new NextResponse("Server configuration error.", { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
 
-    // --- Main API Logic from here ---
     try {
         const formData = await req.formData();
         const jobDescription = formData.get('jobDescription') as string;
@@ -81,7 +119,6 @@ export async function POST(req: NextRequest) {
             return new NextResponse('Missing job description or resume file', { status: 400 });
         }
 
-        // 1. Read Resume Content
         const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
         let resumeText = '';
         if (resumeFile.type === 'application/pdf') {
@@ -95,11 +132,9 @@ export async function POST(req: NextRequest) {
             return new NextResponse('Unsupported file type', { status: 400 });
         }
 
-        // 2. Read Additional Context
         const projectsJson = await getFileContent('data/projects.json');
         const contextTs = await getFileContent('lib/ai/context.ts');
 
-        // 3. Construct the Prompt for Gemini
         const prompt = `
             Act as an expert Applicant Tracking System (ATS) and a professional resume writer.
             Your task is to help me optimize my resume for a specific job description.
@@ -127,9 +162,15 @@ export async function POST(req: NextRequest) {
             6.  **Formatting**: Do not use any Markdown formatting (no '###', '**', '*', or '-'). Respond in plain text only, using line breaks to separate ideas.
         `;
 
-        // 4. Generate Content with Gemini
         const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' });
-        const result = await model.generateContent(prompt);
+        
+        // Replace direct call with the new retry mechanism
+        const result = await generateWithRetry(model, prompt);
+
+        if (!result) {
+            throw new Error("AI response was unexpectedly empty after retries.");
+        }
+        
         const response = await result.response;
         const text = await response.text();
 
@@ -138,9 +179,17 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'text/plain' }
         });
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
+            console.warn("ATS Checker API: Final attempt failed with 503. Sending graceful response.");
+            return new NextResponse(
+                "The AI service is currently overloaded. Please try again in a moment.",
+                { status: 503, headers: { 'Content-Type': 'text/plain' } }
+            );
+        }
+
         console.error('Error in ATS checker API:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return new NextResponse(JSON.stringify({ error: 'Internal Server Error', message: errorMessage }), { status: 500 });
+        return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
 }

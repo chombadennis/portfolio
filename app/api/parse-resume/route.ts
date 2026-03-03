@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import mammoth from 'mammoth';
 const { PDFParse } = require('pdf-parse');
@@ -9,7 +8,7 @@ export async function POST(req: Request) {
         const resumeFile = formData.get('resume') as File | null;
 
         if (!resumeFile) {
-            return NextResponse.json({ error: "No resume file provided" }, { status: 400 });
+            return new NextResponse("No resume file provided", { status: 400, headers: { 'Content-Type': 'text/plain' } });
         }
 
         const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
@@ -23,14 +22,14 @@ export async function POST(req: Request) {
             const { value } = await mammoth.extractRawText({ buffer: resumeBuffer });
             resumeText = value;
         } else {
-            return NextResponse.json({ error: "Unsupported file type. Please upload a .pdf or .docx file." }, { status: 400 });
+            return new NextResponse("Unsupported file type. Please upload a .pdf or .docx file.", { status: 400, headers: { 'Content-Type': 'text/plain' } });
         }
 
-        return NextResponse.json({ resumeText });
+        return new NextResponse(resumeText, { status: 200, headers: { 'Content-Type': 'text/plain' } });
 
     } catch (error) {
         console.error('Error in parse-resume API:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return NextResponse.json({ error: 'Internal Server Error', message: errorMessage }, { status: 500 });
+        return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
 }

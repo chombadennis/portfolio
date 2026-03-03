@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
 import mammoth from 'mammoth';
 const { PDFParse } = require('pdf-parse');
 
@@ -21,6 +21,47 @@ async function getFileText(file: File): Promise<string> {
     }
 }
 
+// --- START: Production-Grade Error Handling ---
+async function generateWithRetry(model: any, prompt: string, retries = 3) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out')), 90000) // 90-second timeout for longer resume generation
+      );
+      
+      const result = await Promise.race([
+        model.generateContent(prompt),
+        timeoutPromise
+      ]);
+      return result;
+
+    } catch (err: any) {
+      if (err.message === 'Request timed out') {
+          console.warn(`Generate-Resume API: generateContent timed out (Attempt ${attempt + 1})`);
+           if (attempt < retries - 1) {
+              const delay = 1000 * Math.pow(2, attempt);
+              await new Promise(res => setTimeout(res, delay));
+              attempt++;
+              continue;
+           } else {
+              throw new GoogleGenerativeAIFetchError("The AI service timed out after multiple retries.", 503);
+           }
+      }
+
+      if (err instanceof GoogleGenerativeAIFetchError && err.status === 503 && attempt < retries - 1) {
+        const delay = 1000 * Math.pow(2, attempt);
+        console.warn(`Generate-Resume API: Received 503, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
+        await new Promise(res => setTimeout(res, delay));
+        attempt++;
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+// --- END: Production-Grade Error Handling ---
+
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
@@ -28,7 +69,7 @@ export async function POST(req: Request) {
         const resumeFile = formData.get('resume') as File;
 
         if (!jobDescription || !resumeFile) {
-            return new NextResponse('Job description and resume file are required.', { status: 400 });
+            return new NextResponse('Job description and resume file are required.', { status: 400, headers: { 'Content-Type': 'text/plain' } });
         }
 
         const resumeText = await getFileText(resumeFile);
@@ -73,7 +114,13 @@ export async function POST(req: Request) {
         **Original Resume:**
         ${resumeText}`;
 
-        const result = await model.generateContent(prompt);
+        // Replace direct call with the new retry mechanism
+        const result = await generateWithRetry(model, prompt);
+        
+        if (!result) {
+            throw new Error("AI response was unexpectedly empty after retries.");
+        }
+
         const response = await result.response;
         const refinedResume = await response.text();
 
@@ -82,9 +129,17 @@ export async function POST(req: Request) {
             headers: { 'Content-Type': 'text/plain' }
         });
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
+            console.warn("Generate-Resume API: Final attempt failed with 503. Sending graceful response.");
+            return new NextResponse(
+                "The AI service is currently overloaded. Please try again in a moment.",
+                { status: 503, headers: { 'Content-Type': 'text/plain' } }
+            );
+        }
+
         console.error('Error in generate-resume API:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return new NextResponse(JSON.stringify({ message: `Internal Server Error: ${errorMessage}` }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
 }

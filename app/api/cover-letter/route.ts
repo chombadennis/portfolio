@@ -1,5 +1,5 @@
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from "@google/generative-ai";
 import { portfolioContext } from "@/lib/ai/context";
 import { 
     heroContent,
@@ -9,15 +9,14 @@ import {
 import projectsData from "@/data/projects.json";
 import { NextRequest, NextResponse } from "next/server";
 import { initializeApp, getApps, App, cert } from "firebase-admin/app";
-import { getAuth, DecodedIdToken } from "firebase-admin/auth";
+import { getAuth } from "firebase-admin/auth";
 
-// --- START: Firebase Admin Initialization (minimal addition for security) ---
+// --- START: Firebase Admin Initialization ---
 let adminApp: App | undefined;
 let auth: ReturnType<typeof getAuth> | undefined;
 
 function initializeFirebaseAdmin() {
     if (getApps().length === 0) {
-        // CORRECTED: Use the variable name defined in apphosting.yaml
         const serviceAccountKey = process.env.APP_SERVICE_ACCOUNT_KEY;
         if (!serviceAccountKey) {
             throw new Error("APP_SERVICE_ACCOUNT_KEY is missing.");
@@ -47,8 +46,6 @@ async function getIsAdmin(req: NextRequest): Promise<boolean> {
 }
 // --- END: Firebase Admin Initialization ---
 
-
-// --- START: Your working Gemini AI Implementation ---
 const API_KEY = process.env.GEMINI_API_KEY || "";
 
 if (!API_KEY) {
@@ -71,32 +68,71 @@ const comprehensiveContext = `
   ${projectsContext}
 `;
 
+// --- START: Production-Grade Error Handling ---
+async function generateWithRetry(model: any, prompt: string, retries = 3) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out')), 65000)
+      );
+      
+      const result = await Promise.race([
+        model.generateContent(prompt),
+        timeoutPromise
+      ]);
+      return result;
+
+    } catch (err: any) {
+      if (err.message === 'Request timed out') {
+          console.warn(`Cover Letter API: generateContent timed out (Attempt ${attempt + 1})`);
+           if (attempt < retries - 1) {
+              const delay = 1000 * Math.pow(2, attempt);
+              await new Promise(res => setTimeout(res, delay));
+              attempt++;
+              continue;
+           } else {
+              throw new GoogleGenerativeAIFetchError("The AI service timed out after multiple retries.", 503);
+           }
+      }
+
+      if (err instanceof GoogleGenerativeAIFetchError && err.status === 503 && attempt < retries - 1) {
+        const delay = 1000 * Math.pow(2, attempt);
+        console.warn(`Cover Letter API: Received 503, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
+        await new Promise(res => setTimeout(res, delay));
+        attempt++;
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+// --- END: Production-Grade Error Handling ---
+
 export async function POST(req: NextRequest) {
-  // 1. Initialize and check authentication first
   try {
       initializeFirebaseAdmin();
       const isAdmin = await getIsAdmin(req);
       if (!isAdmin) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+          return new NextResponse("Unauthorized", { status: 401, headers: { 'Content-Type': 'text/plain' } });
       }
   } catch (e: any) {
       console.error("Authentication check failed:", e);
-      return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+      return new NextResponse("Server configuration error.", { status: 500, headers: { 'Content-Type': 'text/plain' } });
   }
 
-  // 2. Proceed with your proven logic
   if (!API_KEY) {
-    return new Response("AI service API key not configured", { status: 500 });
+    return new NextResponse("AI service API key not configured", { status: 500, headers: { 'Content-Type': 'text/plain' } });
   }
 
   try {
     const { jobDescription } = await req.json();
 
     if (!jobDescription) {
-      return new Response("Job description is required", { status: 400 });
+      return new NextResponse("Job description is required", { status: 400, headers: { 'Content-Type': 'text/plain' } });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" }); // Correct model name
+    const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
 
     const prompt = `
     Based on the following context and the job description provided, write a professional and compelling cover letter. The cover letter should be tailored to the job description, highlighting the most relevant skills and experiences from the provided information.
@@ -117,20 +153,32 @@ export async function POST(req: NextRequest) {
     ${jobDescription}
     `;
 
-    const result = await model.generateContent({ 
-        contents: [{ role: "user", parts: [{text: prompt}] }]
-    });
+    // Replace direct call with retry mechanism
+    const result = await generateWithRetry(model, prompt);
+
+    if (!result) {
+        throw new Error("AI response was unexpectedly empty after retries.");
+    }
+
     const response = await result.response;
     const text = await response.text();
 
-    return new Response(text, { 
+    return new NextResponse(text, { 
       status: 200, 
       headers: { 'Content-Type': 'text/plain' }
     });
 
   } catch (error: any) {
+    if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
+        console.warn("Cover Letter API: Final attempt failed with 503. Sending graceful response.");
+        return new NextResponse(
+            "The AI service is currently overloaded. Please try again in a moment.",
+            { status: 503, headers: { 'Content-Type': 'text/plain' } }
+        );
+    }
+
     console.error("Fatal Error in Cover Letter API:", error);
-    // Send back the specific error from Gemini for better debugging
-    return new Response(`An unexpected error occurred. Details: ${error.message}`, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return new NextResponse(`An internal server error occurred: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
   }
 }
