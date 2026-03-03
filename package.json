@@ -11,7 +11,7 @@
     "test:db": "npx tsc lib/db.ts --outDir dist --esModuleInterop --module ESNext --target ES2020 --moduleResolution node && node scripts/test-db.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.43.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.7",

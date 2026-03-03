@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { promises as fs } from 'fs';
 import path from 'path';
 import mammoth from 'mammoth';
@@ -46,7 +46,7 @@ async function getIsAdmin(req: NextRequest): Promise<boolean> {
 }
 // --- END: Firebase Admin Initialization ---
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 async function getFileContent(filePath: string): Promise<string> {
     const absolutePath = path.resolve(process.cwd(), filePath);
@@ -55,43 +55,38 @@ async function getFileContent(filePath: string): Promise<string> {
 
 
 // --- START: Production-Grade Error Handling ---
-async function generateWithRetry(model: any, prompt: string, retries = 3) {
-  let attempt = 0;
-  while (attempt < retries) {
+async function generateWithRetry(modelName: string, prompt: string, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timed out')), 65000)
       );
       
       const result = await Promise.race([
-        model.generateContent(prompt),
+        genAI.models.generateContent({
+          model: modelName,
+          contents: prompt,
+        }),
         timeoutPromise
       ]);
       return result;
 
     } catch (err: any) {
-      if (err.message === 'Request timed out') {
-          console.warn(`ATS Checker API: generateContent timed out (Attempt ${attempt + 1})`);
-           if (attempt < retries - 1) {
-              const delay = 1000 * Math.pow(2, attempt);
-              await new Promise(res => setTimeout(res, delay));
-              attempt++;
-              continue;
-           } else {
-              throw new GoogleGenerativeAIFetchError("The AI service timed out after multiple retries.", 503);
-           }
-      }
+        console.warn(`ATS Checker API: Attempt ${attempt} failed for model ${modelName}. Error: ${err.message}`);
+        if (attempt === retries) {
+            throw err;
+        }
 
-      if (err instanceof GoogleGenerativeAIFetchError && err.status === 503 && attempt < retries - 1) {
-        const delay = 1000 * Math.pow(2, attempt);
-        console.warn(`ATS Checker API: Received 503, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
-        await new Promise(res => setTimeout(res, delay));
-        attempt++;
-      } else {
-        throw err;
-      }
+        if (err.message === 'Request timed out' || err.status === 503) {
+            const delay = 1000 * Math.pow(2, attempt - 1);
+            console.warn(`Retrying in ${delay}ms...`);
+            await new Promise(res => setTimeout(res, delay));
+        } else {
+            throw err;
+        }
     }
   }
+  throw new Error(`Failed to generate content with model ${modelName} after ${retries} attempts.`);
 }
 // --- END: Production-Grade Error Handling ---
 
@@ -107,7 +102,8 @@ export async function POST(req: NextRequest) {
         console.error("Authentication check failed:", e);
         return new NextResponse("Server configuration error.", { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
-
+    
+    let result: any;
     try {
         const formData = await req.formData();
         const jobDescription = formData.get('jobDescription') as string;
@@ -159,40 +155,34 @@ export async function POST(req: NextRequest) {
             6.  **Formatting**: Do not use any Markdown formatting (no '###', '**', '*', or '-'). Respond in plain text only, using line breaks to separate ideas.
         `;
 
-        const modelsToTry = ['gemini-pro-latest', 'gemini-flash-latest'];
-        let result;
-        let lastError;
+        const primaryModel = 'gemini-2.5-pro';
+        const fallbackModel = 'gemini-pro-latest';
 
-        for (const modelName of modelsToTry) {
+        try {
+            console.log(`Attempting to generate content with primary model: ${primaryModel}`);
+            result = await generateWithRetry(primaryModel, prompt);
+        } catch (primaryError: any) {
+            console.warn(`Primary model ${primaryModel} failed. Attempting fallback model ${fallbackModel}.`);
             try {
-                console.log(`Attempting to generate content with model: ${modelName}`);
-                const model = genAI.getGenerativeModel({ model: modelName });
-                
-                result = await generateWithRetry(model, prompt); 
-                
-                if (result) {
-                    console.log(`Successfully generated content with model: ${modelName}`);
-                    break; // Success, exit the loop
-                }
-            } catch (error) {
-                lastError = error;
-                if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
-                    console.warn(`Model ${modelName} failed with 503. Trying next model.`);
-                    continue; // Try the next model
-                } else {
-                    // For other errors (like 404), fail fast
-                    throw error;
-                }
+                result = await generateWithRetry(fallbackModel, prompt);
+            } catch (fallbackError: any) {
+                console.error(`Fallback model ${fallbackModel} also failed.`);
+                throw fallbackError;
             }
         }
 
         if (!result) {
-            console.error("All models failed to generate a response.");
-            throw lastError || new Error("AI response was unexpectedly empty after all fallbacks.");
+            throw new Error("Atheresponse was unexpectedly empty.");
         }
         
-        const response = await result.response;
-        const text = await response.text();
+        const candidates = result.response ? result.response.candidates : result.candidates;
+
+        if (!candidates || candidates.length === 0 || !candidates[0].content?.parts[0]?.text) {
+            console.error("Invalid AI response structure:", JSON.stringify(result, null, 2));
+            throw new Error("Received an invalid response structure from the AI service.");
+        }
+
+        const text = candidates[0].content.parts[0].text;
 
         return new NextResponse(text, { 
             status: 200,
@@ -200,8 +190,11 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
-            console.warn("ATS Checker API: Final attempt failed with 503 after all fallbacks. Sending graceful response.");
+        const status = error.status || 500;
+        const message = error.message || "An unknown error occurred.";
+
+        if (status === 503) {
+            console.warn("ATS Checker API: The request failed after all retries.");
             return new NextResponse(
                 "The AI service is currently overloaded. Please try again in a moment.",
                 { status: 503, headers: { 'Content-Type': 'text/plain' } }
@@ -209,7 +202,6 @@ export async function POST(req: NextRequest) {
         }
 
         console.error('Error in ATS checker API:', error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
+        return new NextResponse(`Internal Server Error: ${message}`, { status: status, headers: { 'Content-Type': 'text/plain' } });
     }
 }

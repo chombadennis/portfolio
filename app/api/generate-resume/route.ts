@@ -1,80 +1,87 @@
-import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI, GoogleGenerativeAIFetchError } from '@google/generative-ai';
+import { NextRequest, NextResponse } from 'next/server';
+// STEP 1: Use the new, correct SDK (`@google/genai`)
+import { GoogleGenAI } from '@google/genai';
 import mammoth from 'mammoth';
-const { PDFParse } = require('pdf-parse');
+import pdf from 'pdf-parse'; // Corrected import
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const API_KEY = process.env.GEMINI_API_KEY || '';
 
-async function getFileText(file: File): Promise<string> {
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    if (file.type === 'application/pdf') {
-        const parser = new PDFParse({ data: buffer });
-        const data = await parser.getText();
-        return data.text;
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        const { value } = await mammoth.extractRawText({ buffer });
-        return value;
-    } else {
-        return new TextDecoder().decode(arrayBuffer);
-    }
+if (!API_KEY) {
+  console.warn("Gemini API key is not set. The resume generation feature will be disabled.");
 }
 
-// --- START: Production-Grade Error Handling ---
-async function generateWithRetry(model: any, prompt: string, retries = 3) {
-  let attempt = 0;
-  while (attempt < retries) {
+// CORRECT INITIALIZATION: The new SDK expects an options object.
+const genAI = new GoogleGenAI({ apiKey: API_KEY });
+
+
+// --- START: Production-Grade Error Handling (Corrected) ---
+async function generateWithRetry(modelName: string, prompt: string, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      // Set a longer timeout for resume generation
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timed out')), 90000) // 90-second timeout for longer resume generation
+        setTimeout(() => reject(new Error('Request timed out')), 90000)
       );
       
       const result = await Promise.race([
-        model.generateContent(prompt),
+        genAI.models.generateContent({
+          model: modelName,
+          contents: prompt,
+        }),
         timeoutPromise
       ]);
       return result;
 
     } catch (err: any) {
-      if (err.message === 'Request timed out') {
-          console.warn(`Generate-Resume API: generateContent timed out (Attempt ${attempt + 1})`);
-           if (attempt < retries - 1) {
-              const delay = 1000 * Math.pow(2, attempt);
-              await new Promise(res => setTimeout(res, delay));
-              attempt++;
-              continue;
-           } else {
-              throw new GoogleGenerativeAIFetchError("The AI service timed out after multiple retries.", 503);
-           }
-      }
+        console.warn(`Generate-Resume API: Attempt ${attempt} failed for model ${modelName}. Error: ${err.message}`);
+        if (attempt === retries) {
+            throw err;
+        }
 
-      if (err instanceof GoogleGenerativeAIFetchError && err.status === 503 && attempt < retries - 1) {
-        const delay = 1000 * Math.pow(2, attempt);
-        console.warn(`Generate-Resume API: Received 503, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
-        await new Promise(res => setTimeout(res, delay));
-        attempt++;
-      } else {
-        throw err;
-      }
+        if (err.message === 'Request timed out' || err.status === 503) {
+            const delay = 1000 * Math.pow(2, attempt - 1);
+            console.warn(`Retrying in ${delay}ms...`);
+            await new Promise(res => setTimeout(res, delay));
+        } else {
+            throw err;
+        }
     }
   }
+  throw new Error(`Failed to generate content with model ${modelName} after ${retries} attempts.`);
 }
-// --- END: Production-Grade Error Handling ---
+// --- END: Production-Grade Error Handling (Corrected) ---
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    let result: any;
+    if (!API_KEY) {
+        return new NextResponse("AI service API key not configured", { status: 500, headers: { 'Content-Type': 'text/plain' } });
+    }
     try {
         const formData = await req.formData();
         const jobDescription = formData.get('jobDescription') as string;
-        const resumeFile = formData.get('resume') as File;
+        const resumeFile = formData.get('resume') as File | null;
 
         if (!jobDescription || !resumeFile) {
             return new NextResponse('Job description and resume file are required.', { status: 400, headers: { 'Content-Type': 'text/plain' } });
         }
 
-        const resumeText = await getFileText(resumeFile);
+        // Re-using the robust file parsing logic from ats-checker
+        const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
+        let resumeText = '';
+        if (resumeFile.type === 'application/pdf') {
+            const data = await pdf(resumeBuffer);
+            resumeText = data.text;
+        } else if (resumeFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const { value } = await mammoth.extractRawText({ buffer: resumeBuffer });
+            resumeText = value;
+        } else {
+             // Fallback for plain text files
+            resumeText = resumeBuffer.toString('utf-8');
+        }
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' });
+
+        const primaryModel = 'gemini-2.5-pro';
+        const fallbackModel = 'gemini-pro-latest'; 
 
         const prompt = `You are an expert resume writer in the year 2026. Based on the following resume and job description, please rewrite the resume to be a perfect fit for the job. 
         The output must be only the rewritten resume text, without any additional pleasantries, greetings, or introductory phrases. 
@@ -114,15 +121,31 @@ export async function POST(req: Request) {
         **Original Resume:**
         ${resumeText}`;
 
-        // Replace direct call with the new retry mechanism
-        const result = await generateWithRetry(model, prompt);
+        try {
+            console.log(`Attempting to generate content with primary model: ${primaryModel}`);
+            result = await generateWithRetry(primaryModel, prompt);
+        } catch (primaryError: any) {
+            console.warn(`Primary model ${primaryModel} failed. Attempting fallback model ${fallbackModel}.`);
+            try {
+                result = await generateWithRetry(fallbackModel, prompt);
+            } catch (fallbackError: any) {
+                console.error(`Fallback model ${fallbackModel} also failed.`);
+                throw fallbackError;
+            }
+        }
         
         if (!result) {
             throw new Error("AI response was unexpectedly empty after retries.");
         }
 
-        const response = await result.response;
-        const refinedResume = await response.text();
+        const candidates = result.response ? result.response.candidates : result.candidates;
+
+        if (!candidates || candidates.length === 0 || !candidates[0].content?.parts[0]?.text) {
+            console.error("Invalid AI response structure:", JSON.stringify(result, null, 2));
+            throw new Error("Received an invalid response structure from the AI service.");
+        }
+
+        const refinedResume = candidates[0].content.parts[0].text;
 
         return new NextResponse(refinedResume, { 
             status: 200, 
@@ -130,7 +153,10 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
+        const status = error.status || 500;
+        const message = error.message || 'An unknown error occurred';
+
+        if (status === 503) {
             console.warn("Generate-Resume API: Final attempt failed with 503. Sending graceful response.");
             return new NextResponse(
                 "The AI service is currently overloaded. Please try again in a moment.",
@@ -139,7 +165,6 @@ export async function POST(req: Request) {
         }
 
         console.error('Error in generate-resume API:', error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        return new NextResponse(`Internal Server Error: ${errorMessage}`, { status: 500, headers: { 'Content-Type': 'text/plain' } });
+        return new NextResponse(`Internal Server Error: ${message}`, { status: status, headers: { 'Content-Type': 'text/plain' } });
     }
 }
