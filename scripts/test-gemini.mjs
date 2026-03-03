@@ -1,4 +1,3 @@
-
 // scripts/test-gemini.mjs
 import fs from "fs";
 import { config } from "dotenv";
@@ -35,10 +34,11 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 async function runTest() {
   try {
-    const modelName = "gemini-pro-latest";
+    // Read model name from command line, or default to 'gemini-pro-latest'
+    const modelName = process.argv[2] || "gemini-pro-latest";
     console.log(`🚀 Attempting to call the Gemini API with the '${modelName}' model...`);
     
-    // Use the model name that we know is available from the API list.
+    // Use the provided model name for the API call.
     const model = genAI.getGenerativeModel({ model: modelName });
     
     const result = await model.generateContent("Say a short, friendly hello.");

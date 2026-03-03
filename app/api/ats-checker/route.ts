@@ -5,9 +5,7 @@ import path from 'path';
 import mammoth from 'mammoth';
 import { initializeApp, getApps, App, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-
-// Correctly import the PDFParse class from 'pdf-parse' using require
-const { PDFParse } = require('pdf-parse');
+import pdf from 'pdf-parse';
 
 // --- START: Firebase Admin Initialization ---
 let adminApp: App | undefined;
@@ -122,8 +120,7 @@ export async function POST(req: NextRequest) {
         const resumeBuffer = Buffer.from(await resumeFile.arrayBuffer());
         let resumeText = '';
         if (resumeFile.type === 'application/pdf') {
-            const parser = new PDFParse({ data: resumeBuffer });
-            const data = await parser.getText();
+            const data = await pdf(resumeBuffer);
             resumeText = data.text;
         } else if (resumeFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             const { value } = await mammoth.extractRawText({ buffer: resumeBuffer });
@@ -162,13 +159,36 @@ export async function POST(req: NextRequest) {
             6.  **Formatting**: Do not use any Markdown formatting (no '###', '**', '*', or '-'). Respond in plain text only, using line breaks to separate ideas.
         `;
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro-latest' });
-        
-        // Replace direct call with the new retry mechanism
-        const result = await generateWithRetry(model, prompt);
+        const modelsToTry = ['gemini-pro-latest', 'gemini-flash-latest'];
+        let result;
+        let lastError;
+
+        for (const modelName of modelsToTry) {
+            try {
+                console.log(`Attempting to generate content with model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                
+                result = await generateWithRetry(model, prompt); 
+                
+                if (result) {
+                    console.log(`Successfully generated content with model: ${modelName}`);
+                    break; // Success, exit the loop
+                }
+            } catch (error) {
+                lastError = error;
+                if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
+                    console.warn(`Model ${modelName} failed with 503. Trying next model.`);
+                    continue; // Try the next model
+                } else {
+                    // For other errors (like 404), fail fast
+                    throw error;
+                }
+            }
+        }
 
         if (!result) {
-            throw new Error("AI response was unexpectedly empty after retries.");
+            console.error("All models failed to generate a response.");
+            throw lastError || new Error("AI response was unexpectedly empty after all fallbacks.");
         }
         
         const response = await result.response;
@@ -181,7 +201,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         if (error instanceof GoogleGenerativeAIFetchError && error.status === 503) {
-            console.warn("ATS Checker API: Final attempt failed with 503. Sending graceful response.");
+            console.warn("ATS Checker API: Final attempt failed with 503 after all fallbacks. Sending graceful response.");
             return new NextResponse(
                 "The AI service is currently overloaded. Please try again in a moment.",
                 { status: 503, headers: { 'Content-Type': 'text/plain' } }

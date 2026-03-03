@@ -38,7 +38,8 @@ env:
   - variable: UPSTASH_REDIS_REST_TOKEN
     secret: UPSTASH_REDIS_REST_TOKEN
 
-# Explicitly include the entire pdf-parse directory to ensure all its
-# internal files, like the worker script, are available in production.
+# Explicitly include library directories to ensure all their internal files
+# are available in the production environment.
 includeFiles:
   - "node_modules/pdf-parse/**"
+  - "node_modules/@google/generative-ai/**"
