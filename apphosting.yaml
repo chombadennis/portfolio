@@ -38,7 +38,7 @@ env:
   - variable: UPSTASH_REDIS_REST_TOKEN
     secret: UPSTASH_REDIS_REST_TOKEN
 
-# Explicitly include the pdf.worker.js file needed by the pdf-parse library.
-# This prevents the Firebase build process from removing it.
+# Explicitly include the entire pdf-parse directory to ensure all its
+# internal files, like the worker script, are available in production.
 includeFiles:
-  - "node_modules/pdf-parse/lib/pdf.worker.js"
+  - "node_modules/pdf-parse/**"
