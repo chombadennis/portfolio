@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
-import path from 'node:path';
-
-// Construct a more robust path to the worker script for the Vercel environment
-const workerPath = path.resolve(process.cwd(), 'node_modules/pdf-parse/lib/pdf.worker.js');
-PDFParse.setWorker(workerPath);
 
 export const runtime = 'nodejs';
 
