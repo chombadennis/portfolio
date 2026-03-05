@@ -153,8 +153,16 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        const status = error.status || 500;
+        const status = error.status || (error.message && error.message.includes('429') ? 429 : 500);
         const message = error.message || 'An unknown error occurred';
+
+        if (status === 429) {
+          console.warn("Generate-Resume API: Hit quota limit (429).");
+          return new NextResponse(
+            "Looks like the AI is taking a quick coffee break due to a billing hiccup. Dennis is already on it, and I can vouch for his skills—he's got this AI thing down. Please try again in a little bit!",
+            { status: 429, headers: { 'Content-Type': 'text/plain' } }
+          );
+        }
 
         if (status === 503) {
             console.warn("Generate-Resume API: Final attempt failed with 503. Sending graceful response.");
